@@ -15,12 +15,9 @@ android.ndk_path = /home/runner/android-sdk/ndk/25.1.8937393
 android.sdk_path = /home/runner/android-sdk
 android.accept_sdk_license = True
 android.enable_androidx = True
-android.skip_update = True   # prevent Buildozer from trying to install/upgrade SDK stuff
+# prevent Buildozer from trying to install/upgrade SDK stuff
+android.skip_update = True
 
-# (Optional, but helps with recent Gradle/AGP)
-# p4a.branch = develop
-
-# NDK version pin (kept for clarity; path above is authoritative)
 android.ndk_version = r25b
 
 [buildozer]
