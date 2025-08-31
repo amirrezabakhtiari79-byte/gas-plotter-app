@@ -10,15 +10,17 @@ orientation = portrait
 fullscreen = 1
 
 # Android config
+# Android config
 android.api = 34
 android.ndk_path = /home/runner/android-sdk/ndk/25.1.8937393
 android.sdk_path = /home/runner/android-sdk
 android.accept_sdk_license = True
 android.enable_androidx = True
-# prevent Buildozer from trying to install/upgrade SDK stuff
 android.skip_update = True
-
 android.ndk_version = r25b
+
+# Use latest python-for-android (better SDK/NDK detection)
+p4a.branch = develop
 
 [buildozer]
 log_level = 2
