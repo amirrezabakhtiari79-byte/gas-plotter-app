@@ -18,4 +18,3 @@ android.ndk_version = r25b
 android.api = 31
 android.accept_sdk_license = True
 android.enable_androidx = True
-android.build_tools = 30.0.3
