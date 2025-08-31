@@ -15,6 +15,9 @@ warn_on_root = 1
 
 # STABILITY FIXES
 android.ndk_version = r25b
-android.api = 31
+# API 33 is the latest stable, works fine for Play Store
+android.api = 33
+android.build_tools_version = 33.0.2
 android.accept_sdk_license = True
 android.enable_androidx = True
+
