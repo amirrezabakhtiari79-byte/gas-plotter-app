@@ -10,6 +10,7 @@ orientation = portrait
 fullscreen = 1
 
 [buildozer]
+android.sdk_path = $HOME/android-sdk
 log_level = 2
 warn_on_root = 1
 
