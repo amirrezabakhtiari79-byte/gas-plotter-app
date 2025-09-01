@@ -14,7 +14,6 @@ log_level = 2
 warn_on_root = 1
 
 # --- Android Settings ---
-# These are the only settings needed, as Docker handles the rest.
 android.api = 31
 android.ndk_version = r25b
 android.enable_androidx = True
