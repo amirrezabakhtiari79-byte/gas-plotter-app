@@ -15,8 +15,9 @@ warn_on_root = 1
 
 # --- Android Settings ---
 android.api = 31
-android.ndk_version = r25b
 android.enable_androidx = True
 
-# SOLUTION 3: Pin the SDK path to the one set up by the workflow
+# SOLUTION 3: Pin the SDK and NDK paths to the ones set by the GitHub Action.
+# This forces Buildozer to use the clean, pre-licensed SDK.
 android.sdk_path = /usr/local/lib/android/sdk
+android.ndk_path = /usr/local/lib/android/sdk/ndk-bundle
