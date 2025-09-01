@@ -17,3 +17,6 @@ warn_on_root = 1
 android.api = 31
 android.ndk_version = r25b
 android.enable_androidx = True
+
+# SOLUTION 3: Pin the SDK path to the one set up by the workflow
+android.sdk_path = /usr/local/lib/android/sdk
