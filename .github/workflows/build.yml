@@ -1,4 +1,4 @@
-name: Build Kivy APK with Buildozer
+name: Build Kivy APK with Buildozer (Solution 2)
 
 on:
   push:
@@ -19,16 +19,12 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Set up Android SDK and explicitly install build-tools
+      - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          # Install the specific build-tools version required
-          build-tools: "33.0.1" 
 
       - name: Install Python dependencies
         run: |
           pip install buildozer==1.5.0
-          cython --version
           pip install cython==0.29.34
 
       - name: Build with Buildozer
