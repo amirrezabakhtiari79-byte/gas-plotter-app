@@ -18,5 +18,5 @@ android.api = 31
 android.ndk_version = r25b
 android.enable_androidx = True
 
-# NEW STRATEGY: Use the develop branch for the latest fixes
+# SOLUTION 2: Use the develop branch of python-for-android for the latest fixes.
 p4a.branch = develop
