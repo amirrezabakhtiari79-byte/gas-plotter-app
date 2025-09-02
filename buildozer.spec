@@ -17,5 +17,6 @@ warn_on_root = 1
 android.api = 31
 android.ndk_version = r25b
 android.enable_androidx = True
-android.accept_sdk_license = True
-android.skip_update = False
+
+# NEW STRATEGY: Use the develop branch for the latest fixes
+p4a.branch = develop
