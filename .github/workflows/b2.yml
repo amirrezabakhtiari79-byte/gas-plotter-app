@@ -1,0 +1,72 @@
+name: Build Android APK with Buildozer
+
+# This workflow runs on pushes to the main branch or can be triggered manually
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build APK on Ubuntu
+    runs-on: ubuntu-latest # Use the latest stable Ubuntu runner
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin' # A reliable OpenJDK distribution
+          java-version: '17'
+
+      - name: Install system dependencies and 32-bit libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3-pip \
+            build-essential \
+            git \
+            python3-dev \
+            libffi-dev \
+            libssl-dev \
+            libxml2-dev \
+            libxslt1-dev \
+            zlib1g-dev \
+            libsdl2-dev \
+            libsdl2-image-dev \
+            libsdl2-mixer-dev \
+            libsdl2-ttf-dev \
+            # --- CRITICAL FIX: Add 32-bit libraries for Android SDK tools ---
+            lib32stdc++6 \
+            lib32z1
+
+      - name: Add local pip directory to PATH
+        run: |
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install Buildozer and required Python packages
+        run: |
+          pip3 install --user --upgrade buildozer
+          # Pinning Cython version for stability, as seen in previous logs
+          pip3 install --user cython==0.29.34
+      
+      - name: Ensure buildozer.spec is configured for debugging
+        run: |
+          # This ensures the log level is high, making it easier to debug future errors
+          sed -i 's/^# log_level = 2/log_level = 2/' buildozer.spec
+          # This ensures the requirements are correctly set, overriding any local changes
+          sed -i "s/^requirements =.*/requirements = python3,kivy,kivy-garden.graph,fpdf,arabic_reshaper,python-bidi/" buildozer.spec
+
+      - name: Build the APK with Buildozer
+        run: |
+          buildozer -v android debug
+
+      - name: Upload the APK as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-apk
+          path: bin/*.apk # The path where Buildozer places the final APK
