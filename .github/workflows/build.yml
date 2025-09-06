@@ -1,43 +1,49 @@
-name: Build Android APK (Stable Docker Method)
+name: Build Kivy APK with Buildozer (Solution 2)
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 jobs:
-  build-android:
-    name: Build APK using official Kivy Docker image
+  build:
     runs-on: ubuntu-latest
 
-    # This line tells GitHub Actions to run all steps inside the specified container
-    container: kivy/buildozer:latest
-
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set ownership of the checkout directory
-        # The container runs as a 'kivy' user, but the checkout is done by the 'runner' user.
-        # This step gives the 'kivy' user permission to write build files in the repository directory.
-        run: |
-          sudo chown -R kivy:kivy .
-      
-      - name: Ensure buildozer.spec is configured for debugging
-        run: |
-          # This ensures the log level is high, making it easier to debug future errors
-          sed -i 's/^# log_level = 2/log_level = 2/' buildozer.spec
-          # This ensures the requirements are correctly set, overriding any local changes
-          sed -i "s/^requirements =.*/requirements = python3,kivy,kivy-garden.graph,fpdf,arabic_reshaper,python-bidi/" buildozer.spec
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
 
-      - name: Build the APK with Buildozer
-        run: |
-          buildozer -v android debug
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-      - name: Upload the APK as a workflow artifact
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev build-essential libstdc++6 aidl gettext
+
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade cython==0.29.34 buildozer==1.5.0
+
+      - name: Initialize and configure Buildozer
+        run: |
+          buildozer init || true
+          sed -i 's/# android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
+          sed -i 's/log_level = 1/log_level = 2/' buildozer.spec || sed -i 's/log_level = 0/log_level = 2/' buildozer.spec
+
+      - name: Build with Buildozer
+        run: buildozer -v android debug
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: package-apk
+          name: package
           path: bin/*.apk
