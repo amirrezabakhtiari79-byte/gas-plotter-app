@@ -1,47 +1,50 @@
-name: Build Android APK (Stable Docker Method)
+name: Build Kivy APK with Buildozer (Manual Setup)
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 jobs:
-  build-android:
-    name: Build APK using official Kivy Docker image
-    runs-on: ubuntu-latest
-
-    # This line tells GitHub Actions to run all steps inside the specified container,
-    # which already has all the correct dependencies and tools installed.
-    container: kivy/buildozer:latest
+  build:
+    runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set ownership of the checkout directory
-        # The container runs as a 'kivy' user, so we give it permission to write files.
-        run: |
-          sudo chown -R kivy:kivy .
-      
-      - name: Configure buildozer.spec requirements
-        run: |
-          # This is the most critical step. It configures the buildozer.spec file
-          # with all the necessary Python libraries for your app.
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-          # Set the log level for better debugging output
-          sed -i 's/^# log_level = 2/log_level = 2/' buildozer.spec
+      - name: Install system dependencies (including 32-bit libs)
+        run: |
+          sudo apt-get update
+          # CRITICAL: Added lib32stdc++6 and lib32z1 for Android SDK tools
+          sudo apt-get install -y git zip unzip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev build-essential lib32stdc++6 lib32z1
 
-          # Set all Python requirements, including the direct GitHub link for kivy_biometric
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade setuptools cython==0.29.34 buildozer
+
+      - name: Configure Buildozer and set requirements
+        run: |
+          # This is the most critical fix. It sets the requirements for your app.
+          # It finds the requirements line and replaces it entirely.
           sed -i "s/^requirements =.*/requirements = python3,kivy==2.1.0,kivy-garden.graph,fpdf,arabic_reshaper,python-bidi,kivy_text_provider_pango,kivy_biometric @ git+https:\/\/github.com\/kivy-garden\/kivy_biometric.git/" buildozer.spec
 
-      - name: Build the APK with Buildozer
+          # Set other necessary configurations
+          sed -i 's/# android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
+          sed -i 's/log_level = 1/log_level = 2/' buildozer.spec
+
+      - name: Build with Buildozer
         run: |
-          # The container is already set up to accept the SDK license automatically.
+          # No need for 'yes |' because we set the license in the .spec file
           buildozer -v android debug
 
-      - name: Upload the APK as a workflow artifact
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: package-apk
