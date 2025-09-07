@@ -5,7 +5,7 @@ package.domain = org.mycompany.gasplotter
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,ttf,txt
 version = 0.1
-requirements = python3,kivy==2.1.0,kivy_garden.graph,arabic_reshaper,python-bidi
+requirements = python3,kivy==2.1.0,kivy_garden.graph,arabic_reshaper,python-bidi,kivy_biometric,kivy_text_provider_pango
 orientation = portrait
 fullscreen = 1
 
@@ -17,6 +17,7 @@ warn_on_root = 1
 android.api = 31
 android.ndk_version = r25b
 android.enable_androidx = True
+android.permissions = INTERNET,USE_BIOMETRIC
 
 # SOLUTION 2: Use the develop branch of python-for-android for the latest fixes.
 p4a.branch = develop
