@@ -3,21 +3,26 @@ title = Gas Plotter
 package.name = gasplotter
 package.domain = org.mycompany.gasplotter
 source.dir = .
-source.include_exts = py,png,jpg,kv,atlas,ttf,txt
-version = 0.1
-requirements = python3,kivy==2.1.0,kivy_garden.graph,arabic_reshaper,python-bidi,kivy_biometric,kivy_text_provider_pango
+source.include_exts = py,png,jpg,kv,atlas,ttf,txt,json
+source.exclude_exts = spec
+source.exclude_dirs = tests, bin, venv
+source.exclude_patterns = license, *.pyc
+requirements = python3,kivy==2.3.0,kivy-garden.graph,fpdf,arabic-reshaper,python-bidi,kivy-biometric
+android.permissions = INTERNET,BIOMETRIC_AUTHENTICATE,USE_BIOMETRIC,USE_FINGERPRINT
 orientation = portrait
 fullscreen = 1
+version = 0.1
 
 [buildozer]
 log_level = 2
 warn_on_root = 1
 
 # --- Android Settings ---
+android.accept_sdk_license = True
+android.sdk = 33
+android.ndk = r25b
+android.minapi = 21
 android.api = 31
-android.ndk_version = r25b
+android.build_tools = 34.0.0
 android.enable_androidx = True
-android.permissions = INTERNET,USE_BIOMETRIC
-
-# SOLUTION 2: Use the develop branch of python-for-android for the latest fixes.
 p4a.branch = develop
