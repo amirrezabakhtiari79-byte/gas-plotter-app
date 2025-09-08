@@ -25,4 +25,4 @@ android.minapi = 21
 android.api = 31
 android.build_tools = 34.0.0
 android.enable_androidx = True
-p4a.branch = develop
+p4a.branch = master
