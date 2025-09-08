@@ -21,11 +21,39 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev build-essential libstdc++6 aidl gettext automake libsdl2-dev libsdl2-ttf-dev
+          sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev build-essential libstdc++6 aidl gettext automake libsdl2-dev libsdl2-ttf-dev python3-pip
 
-      - name: Install Python dependencies
+      - name: Install pipx
         run: |
-          pip install --upgrade setuptools cython==0.29.34 buildozer
+          sudo apt-get install -y pipx
+          pipx ensurepath
+
+      - name: Install Python dependencies with pipx
+        run: |
+          pipx install buildozer
+          pipx inject buildozer cython==0.29.34
+          pipx inject buildozer setuptools
+
+      - name: Install Android SDK command-line tools
+        run: |
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+          unzip -q cmdline-tools.zip -d /tmp
+          mkdir -p /home/runner/.buildozer/android/platform/android-sdk
+          mv /tmp/cmdline-tools /home/runner/.buildozer/android/platform/android-sdk/cmdline-tools
+          echo "export ANDROIDSDK=/home/runner/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
+          echo "export PATH=$PATH:/home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/bin" >> $GITHUB_ENV
+
+      - name: Pre-accept SDK licenses
+        run: |
+          mkdir -p /home/runner/.buildozer/android/platform/android-sdk/licenses
+          echo -e "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n24333f8a63b6825ea9c5514f83c2829b004d1fee" > /home/runner/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+          echo -e "84831b9409646a918e30573bab4c9c91346d8abd" > /home/runner/.buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
+          echo -e "33b6a2b64607f11b759f320ef9cc1fa173b4dcec" > /home/runner/.buildozer/android/platform/android-sdk/licenses/android-googletv-license
+          echo -e "79120722343a6f3e6290098981203dad5e60b279" > /home/runner/.buildozer/android/platform/android-sdk/licenses/android-sdk-arm-dbt-license
+
+      - name: Install Android build tools
+        run: |
+          /home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/bin/sdkmanager --install "build-tools;34.0.0" "platforms;android-31" "ndk;25.2.9519653"
 
       - name: Configure Buildozer spec
         run: |
@@ -43,15 +71,12 @@ jobs:
           sed -i 's/p4a.branch = develop/p4a.branch = master/' buildozer.spec
 
       - name: Build with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
-        id: buildozer
-        with:
-          command: buildozer android debug
-          workdir: .
-          buildozer_version: stable
+        run: |
+          export PATH=$PATH:/home/runner/.local/bin
+          yes | buildozer -v android debug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: package
-          path: ${{ steps.buildozer.outputs.filename }}
+          path: bin/*.apk
