@@ -21,7 +21,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev build-essential libstdc++6 aidl gettext automake libsdl2-dev libsdl2-ttf-dev
+          sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev build-essential libstdc++6 aidl gettext automake libsdl2-dev libsdl2-ttf-dev python3-pip
 
       - name: Install Python dependencies
         run: |
@@ -75,11 +75,14 @@ jobs:
           sed -i 's/#android.build_tools = .*/android.build_tools = 34.0.0/' buildozer.spec
           sed -i 's/p4a.branch = develop/p4a.branch = master/' buildozer.spec
           sed -i 's/#android.skip_update = False/android.skip_update = True/' buildozer.spec
-          sed -i 's/#android.sdk_path = /android.sdk_path = \/home\/runner\/.buildozer\/android\/platform\/android-sdk/' buildozer.spec
-          sed -i 's/#android.ndk_path = /android.ndk_path = \/home\/runner\/.buildozer\/android\/platform\/android-sdk\/ndk\/25.1.8937393/' buildozer.spec
+          sed -i 's|#android.sdk_path =.*|android.sdk_path = /home/runner/.buildozer/android/platform/android-sdk|' buildozer.spec
+          sed -i 's|#android.ndk_path =.*|android.ndk_path = /home/runner/.buildozer/android/platform/android-sdk/ndk/25.1.8937393|' buildozer.spec
 
       - name: Build with Buildozer
         run: |
+          export ANDROIDSDK=/home/runner/.buildozer/android/platform/android-sdk
+          export ANDROID_HOME=/home/runner/.buildozer/android/platform/android-sdk
+          export PATH=$PATH:/home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin
           yes | buildozer -v android debug
 
       - name: Upload APK artifact
