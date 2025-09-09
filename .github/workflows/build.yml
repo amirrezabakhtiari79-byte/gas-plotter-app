@@ -21,22 +21,11 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev build-essential libstdc++6 aidl gettext automake libsdl2-dev libsdl2-ttf-dev python3-pip
+          sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev build-essential libstdc++6 aidl gettext automake libsdl2-dev libsdl2-ttf-dev
 
-      - name: Install pipx
+      - name: Install Python dependencies
         run: |
-          sudo apt-get install -y pipx
-          pipx ensurepath
-
-      - name: Install Python dependencies with pipx
-        run: |
-          pipx install buildozer
-          pipx inject buildozer cython==0.29.34
-          pipx inject buildozer setuptools
-
-      - name: Install Cython globally
-        run: |
-          python3 -m pip install --break-system-packages cython==0.29.34
+          python3 -m pip install --break-system-packages buildozer cython==0.29.34 setuptools
 
       - name: Install Android SDK command-line tools
         run: |
@@ -88,8 +77,7 @@ jobs:
 
       - name: Build with Buildozer
         run: |
-          export PATH=$PATH:/home/runner/.local/bin
-          yes | /home/runner/.local/bin/buildozer -v android debug
+          yes | buildozer -v android debug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
