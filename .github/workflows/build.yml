@@ -37,6 +37,10 @@ jobs:
           echo "export ANDROID_HOME=/home/runner/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
           echo "export PATH=$PATH:/home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
 
+      - name: Create SDK tools symlink
+        run: |
+          ln -s /home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest /home/runner/.buildozer/android/platform/android-sdk/tools
+
       - name: Pre-accept SDK licenses
         run: |
           licenses_dir="/home/runner/.buildozer/android/platform/android-sdk/licenses"
