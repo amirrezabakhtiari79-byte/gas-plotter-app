@@ -27,14 +27,19 @@ jobs:
         run: |
           python3 -m pip install --break-system-packages buildozer cython==0.29.34 setuptools
 
-      - name: Install Legacy Android SDK tools
+      - name: Clear Buildozer cache
         run: |
-          wget -q https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip -O sdk-tools.zip
-          unzip -q sdk-tools.zip -d /home/runner/.buildozer/android/platform/android-sdk
-          chmod +x /home/runner/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
+          rm -rf /home/runner/.buildozer
+
+      - name: Install Android SDK command-line tools
+        run: |
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+          unzip -q cmdline-tools.zip -d /tmp
+          mkdir -p /home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest
+          mv /tmp/cmdline-tools/* /home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest
           echo "export ANDROIDSDK=/home/runner/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
           echo "export ANDROID_HOME=/home/runner/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
-          echo "export PATH=$PATH:/home/runner/.buildozer/android/platform/android-sdk/tools/bin" >> $GITHUB_ENV
+          echo "export PATH=$PATH:/home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
 
       - name: Pre-accept SDK licenses
         run: |
@@ -53,7 +58,7 @@ jobs:
 
       - name: Install Android build tools
         run: |
-          yes | /home/runner/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --install "build-tools;34.0.0" "platforms;android-31" "ndk;25.1.8937393"
+          yes | /home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=/home/runner/.buildozer/android/platform/android-sdk --install "build-tools;34.0.0" "platforms;android-31" "ndk;25.1.8937393"
 
       - name: Configure Buildozer spec
         run: |
@@ -77,7 +82,7 @@ jobs:
         run: |
           export ANDROIDSDK=/home/runner/.buildozer/android/platform/android-sdk
           export ANDROID_HOME=/home/runner/.buildozer/android/platform/android-sdk
-          export PATH=$PATH:/home/runner/.buildozer/android/platform/android-sdk/tools/bin
+          export PATH=$PATH:/home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin
           yes | buildozer -v android debug
 
       - name: Upload APK artifact
