@@ -73,7 +73,7 @@ jobs:
           sed -i 's/#android.minapi = .*/android.minapi = 21/' buildozer.spec
           sed -i 's/#android.api = .*/android.api = 31/' buildozer.spec
           sed -i 's/#android.build_tools = .*/android.build_tools = 34.0.0/' buildozer.spec
-          sed -i 's/p4a.branch = develop/p4a.branch = master/' buildozer.spec
+          sed -i 's/p4a.branch = .*/p4a.branch = develop/' buildozer.spec
           sed -i 's/#android.skip_update = False/android.skip_update = True/' buildozer.spec
           sed -i 's|#android.sdk_path =.*|android.sdk_path = /home/runner/.buildozer/android/platform/android-sdk|' buildozer.spec
           sed -i 's|#android.ndk_path =.*|android.ndk_path = /home/runner/.buildozer/android/platform/android-sdk/ndk/25.1.8937393|' buildozer.spec
