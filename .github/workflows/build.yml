@@ -35,6 +35,7 @@ jobs:
       - name: Install Legacy Android SDK tools
         run: |
           wget -q https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip -O sdk-tools.zip
+          mkdir -p /home/runner/.buildozer/android/platform/android-sdk
           unzip -q sdk-tools.zip -d /home/runner/.buildozer/android/platform/android-sdk
           chmod +x /home/runner/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
           echo "export ANDROIDSDK=/home/runner/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
