@@ -1,92 +1,36 @@
-name: Build Kivy APK with Buildozer
+name: Build Android APK (Final Version)
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches:
+      - main
+      - master
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-22.04
+  build-android:
+    name: Build APK using official Kivy Docker image
+    runs-on: ubuntu-latest
+
+    # The container has all dependencies (Java, Python, 32-bit libs, etc.) pre-installed.
+    container: kivy/buildozer:latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
+        # This step checks out your code, including your new buildozer.spec file.
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install system dependencies
+      - name: Set ownership of the checkout directory
         run: |
-          sudo apt-get update
-          sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev build-essential libstdc++6 aidl gettext automake libsdl2-dev libsdl2-ttf-dev libpango1.0-dev python3-pip
-
-      - name: Install Python dependencies
+          sudo chown -R kivy:kivy .
+      
+      - name: Build the APK with Buildozer
+        # Buildozer will now read all settings directly from your committed buildozer.spec file.
         run: |
-          python3 -m pip install --break-system-packages buildozer cython==0.29.34 setuptools
+          buildozer -v android debug
 
-      - name: Clear Buildozer cache
-        run: |
-          rm -rf /home/runner/.buildozer
-
-      - name: Install Android SDK command-line tools
-        run: |
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-          unzip -q cmdline-tools.zip -d /tmp
-          mkdir -p /home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest
-          mv /tmp/cmdline-tools/* /home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest
-          echo "export ANDROIDSDK=/home/runner/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
-          echo "export ANDROID_HOME=/home/runner/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
-          echo "export PATH=$PATH:/home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
-
-      - name: Pre-accept SDK licenses
-        run: |
-          licenses_dir="/home/runner/.buildozer/android/platform/android-sdk/licenses"
-          mkdir -p "$licenses_dir"
-          sdk_license="$licenses_dir/android-sdk-license"
-          echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > "$sdk_license"
-          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> "$sdk_license"
-          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" >> "$sdk_license"
-          preview_license="$licenses_dir/android-sdk-preview-license"
-          echo "84831b9409646a918e30573bab4c9c91346d8abd" > "$preview_license"
-          googletv_license="$licenses_dir/android-googletv-license"
-          echo "33b6a2b64607f11b759f320ef9cc1fa173b4dcec" > "$googletv_license"
-          arm_dbt_license="$licenses_dir/android-sdk-arm-dbt-license"
-          echo "79120722343a6f3e6290098981203dad5e60b279" > "$arm_dbt_license"
-
-      - name: Install Android build tools
-        run: |
-          yes | /home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=/home/runner/.buildozer/android/platform/android-sdk --install "build-tools;34.0.0" "platforms;android-31" "ndk;25.1.8937393"
-
-      - name: Configure Buildozer spec
-        run: |
-          buildozer init || true
-          sed -i 's/# android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
-          sed -i 's/log_level = 1/log_level = 2/' buildozer.spec || sed -i 's/log_level = 0/log_level = 2/' buildozer.spec
-          sed -i 's/^requirements = .*/requirements = python3,kivy==2.3.0,kivy-garden.graph,fpdf,arabic-reshaper,python-bidi,kivy-biometric/' buildozer.spec
-          sed -i 's/source.include_exts = .*/source.include_exts = py,png,jpg,kv,atlas,ttf,json,txt/' buildozer.spec
-          sed -i 's/#android.permissions = .*/android.permissions = INTERNET,BIOMETRIC_AUTHENTICATE,USE_BIOMETRIC,USE_FINGERPRINT/' buildozer.spec
-          sed -i 's/#android.sdk = .*/android.sdk = 33/' buildozer.spec
-          sed -i 's/#android.ndk = .*/android.ndk = r25b/' buildozer.spec
-          sed -i 's/#android.minapi = .*/android.minapi = 21/' buildozer.spec
-          sed -i 's/#android.api = .*/android.api = 31/' buildozer.spec
-          sed -i 's/#android.build_tools = .*/android.build_tools = 34.0.0/' buildozer.spec
-          sed -i 's/p4a.branch = .*/p4a.branch = develop/' buildozer.spec
-          sed -i 's/#android.skip_update = False/android.skip_update = True/' buildozer.spec
-          sed -i 's|#android.sdk_path =.*|android.sdk_path = /home/runner/.buildozer/android/platform/android-sdk|' buildozer.spec
-          sed -i 's|#android.ndk_path =.*|android.ndk_path = /home/runner/.buildozer/android/platform/android-sdk/ndk/25.1.8937393|' buildozer.spec
-
-      - name: Build with Buildozer
-        run: |
-          export ANDROIDSDK=/home/runner/.buildozer/android/platform/android-sdk
-          export ANDROID_HOME=/home/runner/.buildozer/android/platform/android-sdk
-          export PATH=$PATH:/home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin
-          yes | buildozer -v android debug
-
-      - name: Upload APK artifact
+      - name: Upload the APK as a workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: package
+          name: package-apk
           path: bin/*.apk
