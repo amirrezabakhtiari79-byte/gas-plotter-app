@@ -7,8 +7,8 @@ source.include_exts = py,png,jpg,kv,atlas,ttf,txt,json
 source.exclude_exts = spec
 source.exclude_dirs = tests, bin, venv
 source.exclude_patterns = license, *.pyc
-requirements = python3,kivy==2.3.0,kivy-garden.graph,fpdf,arabic-reshaper,python-bidi,pyjnius
-android.permissions = INTERNET,USE_BIOMETRIC,USE_FINGERPRINT
+requirements = python3,kivy==2.3.0,kivy-garden.graph,fpdf,arabic-reshaper,python-bidi
+android.permissions = INTERNET
 orientation = portrait
 fullscreen = 1
 version = 0.1
