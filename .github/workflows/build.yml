@@ -44,13 +44,4 @@ jobs:
           chmod +x /home/runner/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
           echo "export ANDROIDSDK=/home/runner/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
           echo "export ANDROID_HOME=/home/runner/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
-          echo "export PATH=$PATH:/home/runner/.buildozer/android/platform/android-sdk/tools/bin" >> $GITHUB_ENV
-
-      - name: Pre-accept SDK licenses
-        run: |
-          licenses_dir="/home/runner/.buildozer/android/platform/android-sdk/licenses"
-          mkdir -p "$licenses_dir"
-          sdk_license="$licenses_dir/android-sdk-license"
-          echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > "$sdk_license"
-          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> "$sdk_license"
-          echo "24333f8a63b6825ea9c5514f83c2829b004
+          echo "export PATH=$PATH:/home/runner
