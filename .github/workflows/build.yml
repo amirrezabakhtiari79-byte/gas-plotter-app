@@ -44,4 +44,58 @@ jobs:
           chmod +x /home/runner/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
           echo "export ANDROIDSDK=/home/runner/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
           echo "export ANDROID_HOME=/home/runner/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
-          echo "export PATH=$PATH:/home/runner
+          echo "export PATH=$PATH:/home/runner/.buildozer/android/platform/android-sdk/tools/bin" >> $GITHUB_ENV
+
+      - name: Pre-accept SDK licenses
+        run: |
+          licenses_dir="/home/runner/.buildozer/android/platform/android-sdk/licenses"
+          mkdir -p "$licenses_dir"
+
+          sdk_license="$licenses_dir/android-sdk-license"
+          echo '8933bad161af4178b1185d1a37fbf41ea5269c55' > "$sdk_license"
+          echo 'd56f5187479451eabf01fb78af6dfcb131a6481e' >> "$sdk_license"
+          echo '24333f8a63b6825ea9c5514f83c2829b004d1fee' >> "$sdk_license"
+
+          preview_license="$licenses_dir/android-sdk-preview-license"
+          echo '84831b9409646a918e30573bab4c9c91346d8abd' > "$preview_license"
+
+          googletv_license="$licenses_dir/android-googletv-license"
+          echo '33b6a2b64607f11b759f320ef9cc1fa173b4dcec' > "$googletv_license"
+
+          arm_dbt_license="$licenses_dir/android-sdk-arm-dbt-license"
+          echo '79120722343a6f3e6290098981203dad5e60b279' > "$arm_dbt_license"
+
+      - name: Install Android build tools
+        run: |
+          yes | /home/runner/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --install "build-tools;34.0.0" "platforms;android-31" "ndk;25.1.8937393" "platform-tools"
+
+      - name: Configure Buildozer spec
+        run: |
+          buildozer init || true
+          sed -i 's/# android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
+          sed -i 's/log_level = 1/log_level = 2/' buildozer.spec || sed -i 's/log_level = 0/log_level = 2/' buildozer.spec
+          sed -i 's/^requirements = .*/requirements = python3,kivy==2.3.0,kivy-garden.graph,fpdf,arabic-reshaper,python-bidi,pyjnius/' buildozer.spec
+          sed -i 's/source.include_exts = .*/source.include_exts = py,png,jpg,kv,atlas,ttf,json,txt/' buildozer.spec
+          sed -i 's/#android.permissions = .*/android.permissions = INTERNET,USE_BIOMETRIC,USE_FINGERPRINT/' buildozer.spec
+          sed -i 's/#android.sdk = .*/android.sdk = 33/' buildozer.spec
+          sed -i 's/#android.ndk = .*/android.ndk = r25b/' buildozer.spec
+          sed -i 's/#android.minapi = .*/android.minapi = 21/' buildozer.spec
+          sed -i 's/#android.api = .*/android.api = 31/' buildozer.spec
+          sed -i 's/#android.build_tools = .*/android.build_tools = 34.0.0/' buildozer.spec
+          sed -i 's/p4a.branch = .*/p4a.branch = develop/' buildozer.spec
+          sed -i 's/#android.skip_update = False/android.skip_update = True/' buildozer.spec
+          sed -i 's|#android.sdk_path =.*|android.sdk_path = /home/runner/.buildozer/android/platform/android-sdk|' buildozer.spec
+          sed -i 's|#android.ndk_path =.*|android.ndk_path = /home/runner/.buildozer/android/platform/android-sdk/ndk/25.1.8937393|' buildozer.spec
+
+      - name: Build with Buildozer
+        run: |
+          export ANDROIDSDK=/home/runner/.buildozer/android/platform/android-sdk
+          export ANDROID_HOME=/home/runner/.buildozer/android/platform/android-sdk
+          export PATH=$PATH:/home/runner/.buildozer/android/platform/android-sdk/tools/bin
+          yes | buildozer -v android debug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: bin/*.apk
