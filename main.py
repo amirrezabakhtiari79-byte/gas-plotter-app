@@ -18,67 +18,27 @@ from kivy.clock import Clock
 from kivy.core.text import LabelBase
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.graphics import Color, Rectangle
-from kivy.utils import platform
 import statistics
 import json
 import hashlib
 from fpdf import FPDF
 
-# --- NEW: Pyjnius Biometric Implementation ---
-if platform == 'android':
-    try:
-        from jnius import autoclass, PythonJavaClass, java_method
-        from android.runnable import run_on_ui_thread
-
-        # Import necessary Android classes
-        PythonActivity = autoclass('org.kivy.android.PythonActivity')
-        BiometricPrompt = autoclass('androidx.biometric.BiometricPrompt')
-        BiometricManager = autoclass('androidx.biometric.BiometricManager')
-        Executors = autoclass('java.util.concurrent.Executors')
-        
-        # This is the Python class that will implement the Java AuthenticationCallback interface
-        class AuthenticationCallback(PythonJavaClass):
-            __javainterfaces__ = ['androidx/biometric/BiometricPrompt$AuthenticationCallback']
-
-            def __init__(self, callback):
-                super().__init__()
-                self.callback = callback
-
-            @java_method('(Landroidx/biometric/BiometricPrompt$AuthenticationResult;)V')
-            def onAuthenticationSucceeded(self, result):
-                self.callback(True, "Success")
-
-            @java_method('()V')
-            def onAuthenticationFailed(self):
-                # This is called when a different fingerprint is shown
-                pass  # Usually we wait for the error state
-
-            @java_method('(ILjava/lang/CharSequence;)V')
-            def onAuthenticationError(self, errorCode, errString):
-                # This is called for actual errors or when the user cancels
-                self.callback(False, errString.toString())
-        
-        PYJNIUS_AVAILABLE = True
-    except Exception as e:
-        print(f"Could not import pyjnius classes for biometrics: {e}")
-        PYJNIUS_AVAILABLE = False
-else:
-    PYJNIUS_AVAILABLE = False
-
-
-# --- Farsi Text Shaping Libraries ---
+# Farsi Text Shaping Libraries
 try:
     import arabic_reshaper
     from bidi.algorithm import get_display
-except ImportError:
-    # Define placeholder functions if libraries are not installed
-    def arabic_reshaper(text): return text
-    def get_display(text): return text
+    print("Successfully imported Farsi shaping libraries.")
+except Exception as e:
+    print(f"CRITICAL ERROR: Could not import Farsi libraries. PDF will not work. Error: {e}")
+    def _shape_text(s):
+        return s
 
 def _shape_text(s):
     try:
-        return get_display(arabic_reshaper.reshape(s))
-    except Exception:
+        reshaped_text = arabic_reshaper.reshape(s)
+        return get_display(reshaped_text)
+    except Exception as e:
+        print(f"ERROR: Failed to shape Farsi text. Text: '{s}'. Error: {e}")
         return s
 
 CONFIG_FILE = 'config.json'
@@ -112,14 +72,11 @@ LANGUAGES = {
         "back_main": "Back to Main Menu",
         "security_options": "Security Options",
         "change_password": "Create/Change Password",
-        "fingerprints": "Fingerprint Info",
         "back_settings": "Back to Settings Menu",
         "passwords_empty": "Password fields cannot be empty.",
         "passwords_not_match": "Passwords do not match.",
         "password_set": "Password has been set.",
         "password_removed": "Password has been removed.",
-        "fingerprint_info": "This app uses the fingerprints already registered on your device. You can add or remove fingerprints in your phone's Android Settings under Security.",
-        "fingerprint_info_title": "Fingerprint Information",
         "missing_font_instruction": "Put a Persian TTF (e.g. Vazir.ttf) in the app folder and restart.",
         "time": "Time",
         "pressure_pa": "Pressure (Pa)",
@@ -144,15 +101,9 @@ LANGUAGES = {
         "lang_restart_required": "Language has been updated.",
         "restart_required_title": "Language Changed",
         "ok": "OK",
-        "use_fingerprint_to_login": "Use Fingerprint to Login",
-        "scan_prompt": "Please place your finger on the sensor",
         "enter_current_password": "Enter current password to confirm",
         "confirm_removal": "Confirm Removal",
         "cancel": "Cancel",
-        "bio_auth_title": "Authentication Required",
-        "bio_auth_subtitle": "Log in using your biometric credential",
-        "bio_auth_error": "Authentication failed. Please try again.",
-        "bio_auth_unavailable": "Biometric authentication is not available on this device.",
     },
     "Farsi": {
         "main_menu": "منو اصلی",
@@ -181,14 +132,11 @@ LANGUAGES = {
         "back_main": "بازگشت به منو اصلی",
         "security_options": "گزینه‌های امنیتی",
         "change_password": "ایجاد/تغییر رمز",
-        "fingerprints": "اطلاعات اثرانگشت",
         "back_settings": "بازگشت به تنظیمات",
         "passwords_empty": "فیلدهای رمز عبور نمی‌توانند خالی باشند.",
         "passwords_not_match": "رمزها مطابقت ندارند.",
         "password_set": "رمز با موفقیت ثبت شد.",
         "password_removed": "رمز حذف شد.",
-        "fingerprint_info": "این برنامه از اثر انگشت‌های ثبت شده در دستگاه شما استفاده می‌کند. برای افزودن یا حذف اثر انگشت، به بخش تنظیمات امنیتی گوشی خود مراجعه کنید.",
-        "fingerprint_info_title": "اطلاعات اثرانگشت",
         "missing_font_instruction": "یک فونت فارسی (مثلاً Vazir.ttf) در پوشه برنامه قرار دهید و برنامه را دوباره اجرا کنید.",
         "time": "زمان",
         "pressure_pa": "فشار",
@@ -213,15 +161,9 @@ LANGUAGES = {
         "lang_restart_required": "زبان برنامه تغییر کرد.",
         "restart_required_title": "زبان تغییر کرد",
         "ok": "باشه",
-        "use_fingerprint_to_login": "ورود با اثرانگشت",
-        "scan_prompt": "لطفاً انگشت خود را روی سنسور قرار دهید",
         "enter_current_password": "برای تایید رمز فعلی را وارد کنید",
         "confirm_removal": "تایید حذف",
         "cancel": "لغو",
-        "bio_auth_title": "نیاز به احراز هویت",
-        "bio_auth_subtitle": "با استفاده از اطلاعات بیومتریک خود وارد شوید",
-        "bio_auth_error": "احراز هویت ناموفق بود. لطفاً دوباره تلاش کنید.",
-        "bio_auth_unavailable": "احراز هویت بیومتریک در این دستگاه در دسترس نیست.",
     }
 }
 
@@ -231,9 +173,11 @@ def load_config():
             try: return json.load(f)
             except Exception: return {}
     return {}
+
 def save_config(config):
     with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
         json.dump(config, f, indent=4, ensure_ascii=False)
+
 def hash_password(password, salt):
     return hashlib.sha256((password + salt).encode()).hexdigest()
 
@@ -256,57 +200,8 @@ class FontManager:
                 except Exception: continue
     def available(self):
         return self.registered
+
 FONT_MANAGER = FontManager()
-
-class FingerprintManager:
-    def __init__(self, app):
-        self.app = app
-
-    def available(self):
-        if not PYJNIUS_AVAILABLE:
-            return False
-        
-        try:
-            activity = PythonActivity.mActivity
-            manager = BiometricManager.fromContext(activity)
-            # Check for strong biometric hardware
-            result = manager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)
-            return result == BiometricManager.BIOMETRIC_SUCCESS
-        except Exception as e:
-            print(f"Error checking biometric availability: {e}")
-            return False
-
-    @run_on_ui_thread
-    def authenticate(self, on_complete_callback):
-        if not PYJNIUS_AVAILABLE:
-            on_complete_callback(False, "bio_auth_unavailable")
-            return
-
-        try:
-            activity = PythonActivity.mActivity
-            executor = Executors.newSingleThreadExecutor()
-            
-            # Create an instance of our Python class that acts as the Java callback
-            auth_callback = AuthenticationCallback(on_complete_callback)
-            
-            prompt = BiometricPrompt(activity, executor, auth_callback)
-
-            # Get translated text for the prompt
-            title = self.app.ms(self.app.t("bio_auth_title"))
-            subtitle = self.app.ms(self.app.t("bio_auth_subtitle"))
-            cancel_button = self.app.ms(self.app.t("cancel"))
-            
-            prompt_info = BiometricPrompt.PromptInfo.Builder() \
-                .setTitle(title) \
-                .setSubtitle(subtitle) \
-                .setNegativeButtonText(cancel_button) \
-                .build()
-            
-            prompt.authenticate(prompt_info)
-        except Exception as e:
-            print(f"Error starting authentication: {e}")
-            on_complete_callback(False, "bio_auth_error")
-
 
 class DualLabelButton(ButtonBehavior, BoxLayout):
     def __init__(self, main_key, ext_key, on_press_callback=None, app=None, **kwargs):
@@ -353,7 +248,9 @@ class DataPlotterApp(App):
 
         self.apply_theme()
         FONT_MANAGER.try_register()
-        self.fpm = FingerprintManager(self)
+        
+        # self.fpm = FingerprintManager(self) <-- REMOVED
+        
         self.sm = ScreenManager()
         self.sm.add_widget(EntryScreen(name='entry', app=self))
         self.sm.add_widget(PasswordScreen(name='password', app=self))
@@ -364,27 +261,34 @@ class DataPlotterApp(App):
         self.sm.add_widget(SecurityScreen(name='security_screen', app=self))
         self.sm.current = 'entry'
         return self.sm
+        
     def apply_theme(self):
         if self.config.get('theme') == 'Dark':
             self.theme_background = (0.1, 0.1, 0.1, 1); self.theme_text_color = (0.9, 0.9, 0.9, 1)
         else:
             self.theme_background = (0.95, 0.95, 0.95, 1); self.theme_text_color = (0.1, 0.1, 0.1, 1)
         Window.clearcolor = self.theme_background
+        
     def t(self, key):
         lang = self.config.get('language', 'English'); return LANGUAGES.get(lang, LANGUAGES['English']).get(key, key)
+        
     def is_farsi_mode(self): return self.config.get('language', 'English') == 'Farsi'
+    
     def ms(self, s):
         if self.is_farsi_mode(): return _shape_text(str(s))
         return str(s)
+        
     def get_font(self):
         if self.is_farsi_mode() and FONT_MANAGER.available(): return FONT_MANAGER.font_name
         return 'Roboto'
+        
     def show_info_popup(self, title_key, message_key):
         font = self.get_font(); title = self.ms(self.t(title_key)); message = self.ms(self.t(message_key))
         content = Label(text=message, font_name=font)
         content.bind(size=lambda *x: content.setter('text_size')(content, (content.width-20, None)))
         popup = Popup(title=title, content=content, size_hint=(None, None), size=(400, 200), title_font=font)
         popup.open()
+        
     def ensure_farsi_font_popup(self):
         if self.is_farsi_mode() and not FONT_MANAGER.available(): self.show_info_popup("error", "missing_font_instruction")
 
@@ -435,40 +339,33 @@ class PasswordScreen(BaseScreen):
         self.info_label = Label(font_size='18sp')
         self.password_input = TextInput(password=True, multiline=False, font_size='20sp', size_hint_y=None, height=40)
         self.submit_button = Button(font_size='20sp', size_hint_y=None, height=50, on_press=self.check_password)
-        self.fingerprint_button = Button(font_size='18sp', size_hint_y=None, height=40, on_press=self.use_fingerprint)
+        # self.fingerprint_button = ... <-- REMOVED
         self.back_button = Button(font_size='18sp', size_hint_y=None, height=40, on_press=self.go_back)
-        self.layout.add_widget(self.info_label); self.layout.add_widget(self.password_input)
-        layout.add_widget(self.submit_button); layout.add_widget(self.fingerprint_button)
-        layout.add_widget(self.back_button)
+        
+        self.layout.add_widget(self.info_label)
+        self.layout.add_widget(self.password_input)
+        self.layout.add_widget(self.submit_button)
+        # self.layout.add_widget(self.fingerprint_button) <-- REMOVED
+        self.layout.add_widget(self.back_button)
         self.add_widget(self.layout)
-    def on_pre_enter(self, *args):
-        if not self.app.fpm.available():
-            self.fingerprint_button.disabled = True
-            self.fingerprint_button.opacity = 0.5
-        else:
-            self.fingerprint_button.disabled = False
-            self.fingerprint_button.opacity = 1
-        super().on_pre_enter(*args)
+
     def go_back(self, instance): self.manager.current = 'entry'
+
     def update_ui_text_and_fonts(self):
         self.info_label.text = self.app.ms(self.app.t("password_prompt")); self.info_label.color = self.app.theme_text_color
         self.submit_button.text = self.app.ms(self.app.t("login"))
-        self.fingerprint_button.text = self.app.ms(self.app.t("use_fingerprint_to_login"))
         self.back_button.text = self.app.ms(self.app.t("back_menu"))
         self.password_input.text = ""
         super().update_ui_text_and_fonts()
+        
     def check_password(self, instance):
-        password = self.password_input.text; salt = self.app.config.get('password_salt', ''); password_hash = self.app.config.get('password_hash', '')
-        if hash_password(password, salt) == password_hash: self.manager.current = 'plot'
-        else: self.app.show_info_popup("error", "incorrect_password")
-    def use_fingerprint(self, instance):
-        def on_auth_complete(success, message):
-            if success:
-                self.manager.current = 'plot'
-            else:
-                # The callback returns the raw Java CharSequence, convert it to a string for the popup
-                self.app.show_info_popup("error", str(message))
-        self.app.fpm.authenticate(on_auth_complete)
+        password = self.password_input.text
+        salt = self.app.config.get('password_salt', '')
+        password_hash = self.app.config.get('password_hash', '')
+        if hash_password(password, salt) == password_hash:
+            self.manager.current = 'plot'
+        else:
+            self.app.show_info_popup("error", "incorrect_password")
 
 class PlotScreen(BaseScreen):
     def __init__(self, **kwargs):
@@ -540,7 +437,8 @@ class PlotScreen(BaseScreen):
         export_layout.add_widget(btn_png); export_layout.add_widget(btn_jpg); export_layout.add_widget(btn_pdf)
         return export_layout
     def export_graph(self, file_format):
-        pass # The long unchanged code is omitted for brevity
+        # This function is long and unchanged
+        pass
 
 class SettingsMenuScreen(BaseScreen):
     def __init__(self, **kwargs):
@@ -584,30 +482,20 @@ class SecurityScreen(BaseScreen):
         layout = BoxLayout(orientation='vertical', spacing=20, padding=50)
         self.title = Label(font_size='30sp', bold=True)
         self.change_pass_btn = Button(font_size='20sp', on_press=lambda x: setattr(self.manager, 'current', 'password_settings'))
-        self.fingerprint_btn = Button(font_size='20sp', on_press=self.handle_fingerprint)
+        # self.fingerprint_btn = ... <-- REMOVED
         self.back_btn = Button(font_size='20sp', on_press=lambda x: setattr(self.manager, 'current', 'settings_menu'))
-        layout.add_widget(self.title); layout.add_widget(self.change_pass_btn)
-        layout.add_widget(self.fingerprint_btn); layout.add_widget(self.back_btn)
+        
+        layout.add_widget(self.title)
+        layout.add_widget(self.change_pass_btn)
+        # layout.add_widget(self.fingerprint_btn) <-- REMOVED
+        layout.add_widget(self.back_btn)
         self.add_widget(layout)
-
-    def on_pre_enter(self, *args):
-        if platform != 'android':
-            self.fingerprint_btn.disabled = True
-            self.fingerprint_btn.opacity = 0.5
-        else:
-            self.fingerprint_btn.disabled = False
-            self.fingerprint_btn.opacity = 1
-        super().on_pre_enter(*args)
 
     def update_ui_text_and_fonts(self):
         self.title.text = self.app.ms(self.app.t("security_options")); self.title.color = self.app.theme_text_color
         self.change_pass_btn.text = self.app.ms(self.app.t("change_password"))
-        self.fingerprint_btn.text = self.app.ms(self.app.t("fingerprints"))
         self.back_btn.text = self.app.ms(self.app.t("back_settings"))
         super().update_ui_text_and_fonts()
-
-    def handle_fingerprint(self, instance):
-        self.app.show_info_popup("fingerprint_info_title", "fingerprint_info")
 
 class AppearanceSettingsScreen(BaseScreen):
     def __init__(self, **kwargs):
@@ -690,8 +578,8 @@ class PasswordSettingsScreen(BaseScreen):
         self.pass_input1.text = ""; self.pass_input2.text = ""
         self.app.show_info_popup("main_menu", "password_set")
     def remove_password(self, instance):
-        pass # The long unchanged code is omitted for brevity
+        # This function is long and unchanged
+        pass
 
 if __name__ == '__main__':
     DataPlotterApp().run()
-</xaiArtifact>
