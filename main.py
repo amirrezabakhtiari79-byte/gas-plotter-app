@@ -1,7 +1,3 @@
-# Set Pango as the text provider for Farsi rendering
-import os
-os.environ['KIVY_TEXT'] = 'pango'
-
 import kivy
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
@@ -20,39 +16,14 @@ from kivy.uix.behaviors import ButtonBehavior
 from kivy.graphics import Color, Rectangle
 import statistics
 import json
+import os
 import hashlib
 from fpdf import FPDF
+from kivy.utils import platform
 
-# --- UPDATED: Graceful Farsi Text Shaping ---
-# This new section prevents crashes if the libraries are not available.
-ARABIC_RESHAPER_AVAILABLE = False
-BIDI_AVAILABLE = False
-try:
-    import arabic_reshaper
-    ARABIC_RESHAPER_AVAILABLE = True
-    print("Successfully imported arabic_reshaper.")
-except ImportError as e:
-    print(f"WARNING: Could not import arabic_reshaper. Farsi reshaping disabled. Error: {e}")
-
-try:
-    from bidi.algorithm import get_display
-    BIDI_AVAILABLE = True
-    print("Successfully imported bidi.")
-except ImportError as e:
-    print(f"WARNING: Could not import bidi. Farsi display adjustment disabled. Error: {e}")
-
-def _shape_text(s):
-    if not ARABIC_RESHAPER_AVAILABLE or not BIDI_AVAILABLE:
-        # This will now just return the string, preventing a crash.
-        # Pango will still attempt to render it correctly Right-to-Left.
-        return str(s)
-    try:
-        reshaped_text = arabic_reshaper.reshape(s)
-        return get_display(reshaped_text)
-    except Exception as e:
-        print(f"ERROR: Failed to shape Farsi text. Text: '{s}'. Error: {e}")
-        return str(s)
-# --- END UPDATE ---
+# --- NEW: Android Permissions Handling ---
+if platform == 'android':
+    from android.permissions import request_permissions, Permission
 
 CONFIG_FILE = 'config.json'
 LIGHT_BLUE = (0.55, 0.8, 0.9, 1)
@@ -81,7 +52,6 @@ LANGUAGES = {
         "settings_title": "Settings",
         "appearance": "Appearance",
         "security": "Security",
-        "language": "Language",
         "back_main": "Back to Main Menu",
         "security_options": "Security Options",
         "change_password": "Create/Change Password",
@@ -90,7 +60,6 @@ LANGUAGES = {
         "passwords_not_match": "Passwords do not match.",
         "password_set": "Password has been set.",
         "password_removed": "Password has been removed.",
-        "missing_font_instruction": "Put a Persian TTF (e.g. Vazir.ttf) in the app folder and restart.",
         "time": "Time",
         "pressure_pa": "Pressure (Pa)",
         "theme": "Theme",
@@ -108,17 +77,11 @@ LANGUAGES = {
         "color_orange": "Orange",
         "color_blue": "Blue",
         "color_green": "Green",
-        "lang_choose": "Choose Language",
-        "lang_english": "English",
-        "lang_farsi": "Farsi",
-        "lang_restart_required": "Language has been updated.",
-        "restart_required_title": "Language Changed",
         "ok": "OK",
         "enter_current_password": "Enter current password to confirm",
         "confirm_removal": "Confirm Removal",
         "cancel": "Cancel",
     },
-    # --- NOTE: Farsi translations removed as per your previous request ---
 }
 
 def load_config():
@@ -135,28 +98,6 @@ def save_config(config):
 def hash_password(password, salt):
     return hashlib.sha256((password + salt).encode()).hexdigest()
 
-class FontManager:
-    def __init__(self):
-        self.registered = False
-        self.font_name = None
-        self.font_path = None
-    def try_register(self):
-        if self.registered: return
-        candidates = ['BNaznnBd.ttf', 'vazir.ttf', 'Vazir-Regular.ttf', 'NotoNaskhArabic-Regular.ttf', 'NotoSansArabic-Regular.ttf', 'NotoSansArabic.ttf']
-        for fn in candidates:
-            if os.path.exists(fn):
-                try:
-                    LabelBase.register(name='FarsiFont', fn_regular=fn)
-                    self.registered = True
-                    self.font_name = 'FarsiFont'
-                    self.font_path = fn
-                    return
-                except Exception: continue
-    def available(self):
-        return self.registered
-
-FONT_MANAGER = FontManager()
-
 class DualLabelButton(ButtonBehavior, BoxLayout):
     def __init__(self, main_key, ext_key, on_press_callback=None, app=None, **kwargs):
         super().__init__(orientation='horizontal', spacing=10, padding=10, **kwargs)
@@ -166,10 +107,8 @@ class DualLabelButton(ButtonBehavior, BoxLayout):
         self.bind(pos=self._update_rect, size=self._update_rect)
         self.label_main = Label(halign='center', valign='middle')
         self.label_ext = Label(halign='center', valign='middle')
-        self._on_press_callback = on_press_callback
-        self.update()
-    def _update_rect(self, *a):
-        self._rect.pos = self.pos; self._rect.size = self.size
+        self._on_press_callback = on_press_callback; self.update()
+    def _update_rect(self, *a): self._rect.pos = self.pos; self._rect.size = self.size
     def on_press(self):
         if self._on_press_callback:
             try: self._on_press_callback(self)
@@ -177,23 +116,16 @@ class DualLabelButton(ButtonBehavior, BoxLayout):
     def update(self):
         self.clear_widgets()
         main_raw = self.app.t(self.main_key); ext_raw = self.app.t(self.ext_key)
-        if self.app.is_farsi_mode():
-            self.label_main.text = self.app.ms(main_raw)
-            self.label_main.font_name = self.app.get_font()
-            self.label_ext.text = ext_raw
-            self.label_ext.font_name = 'Roboto'
-            self.add_widget(self.label_ext)
-            self.add_widget(self.label_main)
-        else:
-            self.label_main.text = main_raw
-            self.label_main.font_name = 'Roboto'
-            self.label_ext.text = ext_raw
-            self.label_ext.font_name = 'Roboto'
-            self.add_widget(self.label_main)
-            self.add_widget(self.label_ext)
+        self.label_main.text = main_raw; self.label_main.font_name = 'Roboto'
+        self.label_ext.text = ext_raw; self.label_ext.font_name = 'Roboto'
+        self.add_widget(self.label_main); self.add_widget(self.label_ext)
 
 class DataPlotterApp(App):
     def build(self):
+        if platform == 'android':
+            permissions = [Permission.WRITE_EXTERNAL_STORAGE, Permission.READ_EXTERNAL_STORAGE]
+            request_permissions(permissions)
+        
         self.config = load_config()
         self.config.setdefault('graph_color', [1, 0.4, 0, 0.9])
         self.config.setdefault('title_font_size', '20sp')
@@ -201,7 +133,6 @@ class DataPlotterApp(App):
         self.config.setdefault('language', 'English')
 
         self.apply_theme()
-        FONT_MANAGER.try_register()
         
         self.sm = ScreenManager()
         self.sm.add_widget(EntryScreen(name='entry', app=self))
@@ -222,42 +153,30 @@ class DataPlotterApp(App):
         Window.clearcolor = self.theme_background
         
     def t(self, key):
-        # Default to English if a language pack is missing (e.g., Farsi was removed)
-        lang = self.config.get('language', 'English')
-        return LANGUAGES.get(lang, LANGUAGES['English']).get(key, key)
+        return LANGUAGES['English'].get(key, key)
         
-    def is_farsi_mode(self): return self.config.get('language', 'English') == 'Farsi'
-    
     def ms(self, s):
-        if self.is_farsi_mode(): return _shape_text(str(s))
         return str(s)
         
     def get_font(self):
-        if self.is_farsi_mode() and FONT_MANAGER.available(): return FONT_MANAGER.font_name
         return 'Roboto'
         
     def show_info_popup(self, title_key, message_key):
-        font = self.get_font(); title = self.ms(self.t(title_key)); message = self.ms(self.t(message_key))
-        content = Label(text=message, font_name=font)
+        title = self.t(title_key); message = self.t(message_key)
+        content = Label(text=message)
         content.bind(size=lambda *x: content.setter('text_size')(content, (content.width-20, None)))
-        popup = Popup(title=title, content=content, size_hint=(None, None), size=(400, 200), title_font=font)
+        popup = Popup(title=title, content=content, size_hint=(None, None), size=(400, 200))
         popup.open()
-        
-    def ensure_farsi_font_popup(self):
-        if self.is_farsi_mode() and not FONT_MANAGER.available(): self.show_info_popup("error", "missing_font_instruction")
 
 class BaseScreen(Screen):
     def __init__(self, app, **kwargs):
         super().__init__(**kwargs); self.app = app
     def on_pre_enter(self, *args):
         if hasattr(self, 'update_ui_text_and_fonts'): self.update_ui_text_and_fonts()
-        self.app.ensure_farsi_font_popup()
     def update_ui_text_and_fonts(self): self._update_font_recursive(self)
     def _update_font_recursive(self, widget):
-        font_name = self.app.get_font()
-        if isinstance(widget, (Label, Button)): widget.font_name = font_name
-        if isinstance(widget, TextInput):
-            widget.font_name = font_name; widget.base_direction = 'rtl' if self.app.is_farsi_mode() else 'ltr'
+        if isinstance(widget, (Label, Button, TextInput)):
+            widget.font_name = 'Roboto'
         if isinstance(widget, DualLabelButton): widget.update()
         if hasattr(widget, 'children'):
             for child in list(widget.children):
@@ -276,10 +195,10 @@ class EntryScreen(BaseScreen):
         layout.add_widget(self.settings_button); layout.add_widget(self.exit_button)
         self.add_widget(layout)
     def update_ui_text_and_fonts(self):
-        self.title.text = self.app.ms(self.app.t("main_menu")); self.title.color = self.app.theme_text_color
-        self.login_button.text = self.app.ms(self.app.t("login"))
-        self.settings_button.text = self.app.ms(self.app.t("settings"))
-        self.exit_button.text = self.app.ms(self.app.t("exit"))
+        self.title.text = self.app.t("main_menu"); self.title.color = self.app.theme_text_color
+        self.login_button.text = self.app.t("login")
+        self.settings_button.text = self.app.t("settings")
+        self.exit_button.text = self.app.t("exit")
         super().update_ui_text_and_fonts()
     def go_to_login(self, instance):
         if 'password_hash' in self.app.config: self.manager.current = 'password'
@@ -294,30 +213,23 @@ class PasswordScreen(BaseScreen):
         self.password_input = TextInput(password=True, multiline=False, font_size='20sp', size_hint_y=None, height=40)
         self.submit_button = Button(font_size='20sp', size_hint_y=None, height=50, on_press=self.check_password)
         self.back_button = Button(font_size='18sp', size_hint_y=None, height=40, on_press=self.go_back)
-        
         self.layout.add_widget(self.info_label)
         self.layout.add_widget(self.password_input)
         self.layout.add_widget(self.submit_button)
         self.layout.add_widget(self.back_button)
         self.add_widget(self.layout)
-
     def go_back(self, instance): self.manager.current = 'entry'
-
     def update_ui_text_and_fonts(self):
-        self.info_label.text = self.app.ms(self.app.t("password_prompt")); self.info_label.color = self.app.theme_text_color
-        self.submit_button.text = self.app.ms(self.app.t("login"))
-        self.back_button.text = self.app.ms(self.app.t("back_menu"))
+        self.info_label.text = self.app.t("password_prompt"); self.info_label.color = self.app.theme_text_color
+        self.submit_button.text = self.app.t("login")
+        self.back_button.text = self.app.t("back_menu")
         self.password_input.text = ""
         super().update_ui_text_and_fonts()
-        
     def check_password(self, instance):
-        password = self.password_input.text
-        salt = self.app.config.get('password_salt', '')
+        password = self.password_input.text; salt = self.app.config.get('password_salt', '')
         password_hash = self.app.config.get('password_hash', '')
-        if hash_password(password, salt) == password_hash:
-            self.manager.current = 'plot'
-        else:
-            self.app.show_info_popup("error", "incorrect_password")
+        if hash_password(password, salt) == password_hash: self.manager.current = 'plot'
+        else: self.app.show_info_popup("error", "incorrect_password")
 
 class PlotScreen(BaseScreen):
     def __init__(self, **kwargs):
@@ -326,7 +238,7 @@ class PlotScreen(BaseScreen):
         self.add_widget(self.layout)
     def on_enter(self):
         self.layout.clear_widgets()
-        loading_label = Label(text=self.app.ms(self.app.t("pressure_vs_time")), font_size='24sp', color=self.app.theme_text_color, font_name=self.app.get_font())
+        loading_label = Label(text=self.app.t("pressure_vs_time"), font_size='24sp', color=self.app.theme_text_color)
         self.layout.add_widget(loading_label)
         Clock.schedule_once(self.build_plot, 0.1)
     def build_plot(self, dt):
@@ -335,7 +247,7 @@ class PlotScreen(BaseScreen):
         self.layout.add_widget(self.title_label)
         data_points, time_values, pressure_values = self.load_data()
         if not data_points:
-            error_label = Label(text=self.app.ms(self.app.t("error_data")), color=self.app.theme_text_color, font_name=self.app.get_font())
+            error_label = Label(text=self.app.t("error_data"), color=self.app.theme_text_color)
             self.layout.add_widget(error_label)
             return
         self.layout.add_widget(self.create_stats_layout(pressure_values))
@@ -344,8 +256,8 @@ class PlotScreen(BaseScreen):
         self.layout.add_widget(self.create_export_layout())
         back_button = Button(size_hint_y=None, height=40, on_press=lambda x: setattr(self.manager, 'current', 'entry'))
         self.layout.add_widget(back_button)
-        self.title_label.text = self.app.ms(self.app.t("pressure_vs_time"))
-        back_button.text = self.app.ms(self.app.t("back_menu"))
+        self.title_label.text = self.app.t("pressure_vs_time")
+        back_button.text = self.app.t("back_menu")
         self.update_ui_text_and_fonts()
     def load_data(self):
         data_points, time_values, pressure_values = [], [], []
@@ -364,15 +276,15 @@ class PlotScreen(BaseScreen):
         max_p = Label(color=self.app.theme_text_color); min_p = Label(color=self.app.theme_text_color); avg_p = Label(color=self.app.theme_text_color)
         stats_layout.add_widget(min_p); stats_layout.add_widget(avg_p); stats_layout.add_widget(max_p)
         max_val = max(pressure_values); min_val = min(pressure_values); avg_val = statistics.mean(pressure_values)
-        max_p.text = self.app.ms(f"{self.app.t('max')}: {max_val:.2f}")
-        min_p.text = self.app.ms(f"{self.app.t('min')}: {min_val:.2f}")
-        avg_p.text = self.app.ms(f"{self.app.t('avg')}: {avg_val:.2f}")
+        max_p.text = f"{self.app.t('max')}: {max_val:.2f}"
+        min_p.text = f"{self.app.t('min')}: {min_val:.2f}"
+        avg_p.text = f"{self.app.t('avg')}: {avg_val:.2f}"
         return stats_layout
     def create_graph(self, data_points, time_values, pressure_values):
-        xlabel = self.app.ms(self.app.t("time")); ylabel = self.app.ms(self.app.t("pressure_pa"))
+        xlabel = self.app.t("time"); ylabel = self.app.t("pressure_pa")
         xmaj = (max(time_values) - min(time_values)) / 10 if time_values and max(time_values) != min(time_values) else 1
         ymin = min(pressure_values) if pressure_values else 0; ymax = max(pressure_values) if pressure_values else 1
-        label_opts = {'color': self.app.theme_text_color, 'bold': True, 'font_name': self.app.get_font()}
+        label_opts = {'color': self.app.theme_text_color, 'bold': True}
         graph = Graph(xlabel=xlabel, ylabel=ylabel, x_ticks_major=xmaj, y_ticks_major=(ymax - ymin) / 5 if ymax > ymin else 1,
             y_grid_label=True, x_grid_label=True, padding=10, x_grid=True, y_grid=True,
             xmin=min(time_values) if time_values else 0, xmax=max(time_values) if time_values else 1,
@@ -389,8 +301,7 @@ class PlotScreen(BaseScreen):
         export_layout.add_widget(btn_png); export_layout.add_widget(btn_jpg); export_layout.add_widget(btn_pdf)
         return export_layout
     def export_graph(self, file_format):
-        # This function is long and unchanged
-        pass
+        pass # PDF Export logic would go here
 
 class SettingsMenuScreen(BaseScreen):
     def __init__(self, **kwargs):
@@ -399,39 +310,16 @@ class SettingsMenuScreen(BaseScreen):
         self.title = Label(font_size='30sp', bold=True)
         self.appearance_btn = Button(font_size='20sp', on_press=lambda x: setattr(self.manager, 'current', 'appearance_settings'))
         self.security_btn = Button(font_size='20sp', on_press=lambda x: setattr(self.manager, 'current', 'security_screen'))
-        self.language_btn = Button(font_size='20sp', on_press=self.change_language)
         self.back_btn = Button(font_size='20sp', on_press=lambda x: setattr(self.manager, 'current', 'entry'))
         layout.add_widget(self.title); layout.add_widget(self.appearance_btn); layout.add_widget(self.security_btn)
-        layout.add_widget(self.language_btn); layout.add_widget(self.back_btn)
+        layout.add_widget(self.back_btn)
         self.add_widget(layout)
     def update_ui_text_and_fonts(self):
-        self.title.text = self.app.ms(self.app.t("settings_title")); self.title.color = self.app.theme_text_color
-        self.appearance_btn.text = self.app.ms(self.app.t("appearance"))
-        self.security_btn.text = self.app.ms(self.app.t("security"))
-        self.language_btn.text = self.app.ms(self.app.t("language"))
-        self.back_btn.text = self.app.ms(self.app.t("back_main"))
+        self.title.text = self.app.t("settings_title"); self.title.color = self.app.theme_text_color
+        self.appearance_btn.text = self.app.t("appearance")
+        self.security_btn.text = self.app.t("security")
+        self.back_btn.text = self.app.t("back_main")
         super().update_ui_text_and_fonts()
-    def change_language(self, instance):
-        font = self.app.get_font()
-        content = BoxLayout(orientation='vertical', spacing=10, padding=10)
-        btn_en = Button(text="English", font_name='Roboto')
-        
-        # NOTE: This button is kept for UI consistency, but there's no Farsi translation to switch to.
-        # You could hide or disable this button if you only plan to support English.
-        btn_fa = Button(text="Farsi (Disabled)", font_name=FONT_MANAGER.font_name if FONT_MANAGER.available() else 'Roboto')
-        btn_fa.disabled = True 
-        
-        popup = Popup(title=self.app.ms(self.app.t("lang_choose")), content=content, size_hint=(None, None), size=(300, 200), title_font=font)
-        def set_lang_and_update(lang):
-            popup.dismiss()
-            if lang != self.app.config.get('language'):
-                self.app.config['language'] = lang
-                save_config(self.app.config)
-                self.update_ui_text_and_fonts()
-        btn_en.bind(on_press=lambda x: set_lang_and_update("English"))
-        # btn_fa.bind(on_press=lambda x: set_lang_and_update("Farsi"))
-        content.add_widget(btn_en); content.add_widget(btn_fa)
-        popup.open()
 
 class SecurityScreen(BaseScreen):
     def __init__(self, **kwargs):
@@ -440,16 +328,13 @@ class SecurityScreen(BaseScreen):
         self.title = Label(font_size='30sp', bold=True)
         self.change_pass_btn = Button(font_size='20sp', on_press=lambda x: setattr(self.manager, 'current', 'password_settings'))
         self.back_btn = Button(font_size='20sp', on_press=lambda x: setattr(self.manager, 'current', 'settings_menu'))
-        
-        layout.add_widget(self.title)
-        layout.add_widget(self.change_pass_btn)
+        layout.add_widget(self.title); layout.add_widget(self.change_pass_btn)
         layout.add_widget(self.back_btn)
         self.add_widget(layout)
-
     def update_ui_text_and_fonts(self):
-        self.title.text = self.app.ms(self.app.t("security_options")); self.title.color = self.app.theme_text_color
-        self.change_pass_btn.text = self.app.ms(self.app.t("change_password"))
-        self.back_btn.text = self.app.ms(self.app.t("back_settings"))
+        self.title.text = self.app.t("security_options"); self.title.color = self.app.theme_text_color
+        self.change_pass_btn.text = self.app.t("change_password")
+        self.back_btn.text = self.app.t("back_settings")
         super().update_ui_text_and_fonts()
 
 class AppearanceSettingsScreen(BaseScreen):
@@ -476,13 +361,13 @@ class AppearanceSettingsScreen(BaseScreen):
         layout.add_widget(theme_layout); layout.add_widget(BoxLayout()); layout.add_widget(self.back_button)
         self.add_widget(layout)
     def update_ui_text_and_fonts(self):
-        self.color_label.text = self.app.ms(self.app.t("graph_color"))
-        self.font_label.text = self.app.ms(self.app.t("title_font_size"))
-        self.theme_label.text = self.app.ms(self.app.t("theme"))
-        self.back_button.text = self.app.ms(self.app.t("save_and_back"))
-        self.btn_orange.text = self.app.ms(self.app.t("color_orange")); self.btn_blue.text = self.app.ms(self.app.t("color_blue"))
-        self.btn_green.text = self.app.ms(self.app.t("color_green")); self.light_btn.text = self.app.ms(self.app.t("light"))
-        self.dark_btn.text = self.app.ms(self.app.t("dark"))
+        self.color_label.text = self.app.t("graph_color")
+        self.font_label.text = self.app.t("title_font_size")
+        self.theme_label.text = self.app.t("theme")
+        self.back_button.text = self.app.t("save_and_back")
+        self.btn_orange.text = self.app.t("color_orange"); self.btn_blue.text = self.app.t("color_blue")
+        self.btn_green.text = self.app.t("color_green"); self.light_btn.text = self.app.t("light")
+        self.dark_btn.text = self.app.t("dark")
         self.color_label.color = self.app.theme_text_color; self.font_label.color = self.app.theme_text_color
         self.current_font_label.color = self.app.theme_text_color; self.theme_label.color = self.app.theme_text_color
         try: self.font_slider.value = int(self.app.config['title_font_size'][:-2])
@@ -513,12 +398,12 @@ class PasswordSettingsScreen(BaseScreen):
         layout.add_widget(password_buttons); layout.add_widget(BoxLayout()); layout.add_widget(self.back_button)
         self.add_widget(layout)
     def update_ui_text_and_fonts(self):
-        self.password_label.text = self.app.ms(self.app.t("change_password"))
-        self.set_pass_btn.text = self.app.ms(self.app.t("set_change"))
-        self.remove_pass_btn.text = self.app.ms(self.app.t("remove"))
-        self.back_button.text = self.app.ms(self.app.t("back_to_settings"))
-        self.pass_input1.hint_text = self.app.ms(self.app.t("new_password"))
-        self.pass_input2.hint_text = self.app.ms(self.app.t("confirm_password"))
+        self.password_label.text = self.app.t("change_password")
+        self.set_pass_btn.text = self.app.t("set_change")
+        self.remove_pass_btn.text = self.app.t("remove")
+        self.back_button.text = self.app.t("back_to_settings")
+        self.pass_input1.hint_text = self.app.t("new_password")
+        self.pass_input2.hint_text = self.app.t("confirm_password")
         self.password_label.color = self.app.theme_text_color
         self.pass_input1.text = ""; self.pass_input2.text = ""
         super().update_ui_text_and_fonts()
@@ -533,8 +418,8 @@ class PasswordSettingsScreen(BaseScreen):
         self.pass_input1.text = ""; self.pass_input2.text = ""
         self.app.show_info_popup("main_menu", "password_set")
     def remove_password(self, instance):
-        # This function is long and unchanged
-        pass
+        pass # remove password logic would go here
 
 if __name__ == '__main__':
     DataPlotterApp().run()
+
