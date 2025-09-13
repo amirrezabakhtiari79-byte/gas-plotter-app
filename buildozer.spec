@@ -19,8 +19,8 @@ source.include_exts = py,png,jpg,ttf,txt,json
 version = 1.0
 
 # (list) Application requirements
-# This list is correct and includes the Pango text provider.
-requirements = python3,kivy==2.1.0,kivy-garden.graph,fpdf,arabic_reshaper,python-bidi,kivy_text_provider_pango
+# This list is now simplified to the core needs of your app.
+requirements = python3,kivy==2.1.0,kivy-garden.graph,fpdf
 
 # (str) Presplash image
 presplash.filename = %(source.dir)s/gas.png
@@ -37,10 +37,9 @@ orientation = portrait
 # (list) The Android archs to build for. arm64-v8a is required for the Play Store.
 android.archs = arm64-v8a
 
-# (list) Android permissions
-android.permissions = INTERNET
+# (list) Android permissions needed for file saving/reading.
+android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
 
-# --- This section fixes the build error ---
 # (int) Android API to target. 34 is the modern standard for new apps.
 android.api = 34
 
@@ -52,7 +51,6 @@ android.ndk = 25b
 
 # (str) Android build tools version. 34.0.0 is the corresponding modern version.
 android.build_tools = 34.0.0
-# --- End of fix ---
 
 # (bool) Accept the SDK license agreements automatically
 android.accept_sdk_license = True
@@ -65,3 +63,4 @@ log_level = 2
 
 # (int) Display warning if buildozer is run as root
 warn_on_root = 1
+```
