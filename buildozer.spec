@@ -1,39 +1,61 @@
 [app]
-# ... (keep existing)
 
-# (int) Android SDK version to use
-android.sdk = 34  # Upgrade from 33 for better Gradle 8.x support
+# (str) Title of your application
+title = Data Plotter
 
-# (str) Android NDK version to use
-android.ndk = 25c  # Slight upgrade from 25b for stability
+# (str) Package name
+package.name = dataplotter
 
-# (int) Android SDK build tools version
-android.build_tools = 34.0.0
+# (str) Package domain (needed for android/ios packaging)
+package.domain = org.example
 
-# (bool) Enable AndroidX support (already implied, but explicit)
-android.enable_androidx = True
+# (str) Source code where the main.py live
+source.dir = .
 
-[android]
-# (str) Gradle dependencies to add
-android.gradle_dependencies =  # Empty unless you add libs (e.g., for ads)
+# (list) Source files to include (let empty to include all the files)
+source.include_exts = py,png,ttf,txt
 
-# (list) add java compile options
-android.add_compile_options = "sourceCompatibility = 1.8", "targetCompatibility = 1.8", "-Xmx2048m"  # Heap boost + Java 8 compat
+# (str) Application versioning (method 1)
+version = 1.0
 
-# (str) args to pass when using custom signing key (for debug, adds heap)
-# android.signing_args = --ks-pass env:KEYSTORE_PASSWD (skip for debug)
+# (list) Garden requirements to install
+garden_requirements = graph
 
-[buildozer]
-# ... (keep existing)
+# (list) Application requirements
+# comma separated e.g. requirements = sqlite3,kivy
+requirements = python3,kivy,pango,fpdf
+
+# (str) Icon of the application
+icon.filename = %(source.dir)s/gas.png
+
+# (str) Supported orientation (one of landscape, sensorlandscape, portrait or all)
+orientation = portrait
+
+# (bool) Indicate if the application should be fullscreen or not
+fullscreen = 0
+
+# (list) Permissions
+android.permissions = INTERNET,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
 
 # (int) Target Android SDK, should be as high as possible.
-android.sdk = 33  # Back to 33 (stable with Java 17)
+android.sdk = 33
 
-# (str) Android NDK to use
-android.ndk = 25b  # Back to 25b
+# (bool) If True, then automatically accept SDK license agreements.
+android.accept_sdk_license = True
 
-# (int) Android SDK build tools version
-android.build_tools = 33.0.2  # Match SDK 33
+# (list) Android archs to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
+android.archs = arm64-v8a, armeabi-v7a
 
-# (list) add java compile options
-android.add_compile_options = "sourceCompatibility = 17", "targetCompatibility = 17", "-Xmx2048m"  # Java 17 compat + heap
+# (str) python-for-android branch to use, defaults to master
+#p4a.branch = master
+
+# (str) Bootstrap to use for android builds
+p4a.bootstrap = sdl2
+
+[buildozer]
+
+# (int) Log level (0 = error only, 1 = info, 2 = debug (with command output))
+log_level = 2
+
+# (int) Display warning if buildozer is run as root (0 = False, 1 = True)
+warn_on_root = 1
