@@ -23,7 +23,7 @@ garden_requirements = graph
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy,pango,fpdf,kivy-garden.graph,arabic-reshaper
+requirements = python3,kivy==2.1.0,kivy-garden.graph,fpdf,arabic_reshaper,python-bidi,kivy_text_provider_pango
 
 # (str) Icon of the application
 icon.filename = %(source.dir)s/gas.png
