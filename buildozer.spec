@@ -1,25 +1,27 @@
 [app]
-title = DataPlotter
+title = Data Plotter
 package.name = dataplotter
 package.domain = org.example
 source.dir = .
-source.include_exts = py,png,jpg,kv,json
-version = 0.1
-requirements = python3,kivy,kivy_garden.graph,fpdf,android
-garden_requirements = graph
+source.include_exts = py,png,jpg,kv,atlas
+source.include_patterns = gas.png,data.txt
+version = 1.0
+requirements = python3,hostpython3,kivy==2.2.1,kivy-garden.graph,statistics,fpdf,pyjnius,hashlib
 orientation = portrait
-fullscreen = 0
-android.permissions = WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
-android.api = 31
-android.minapi = 21
-android.sdk = 31
-android.ndk = 23b
-android.archs = arm64-v8a, armeabi-v7a
-android.ndk_api = 21
-# Assets (your gas.png must be in same folder or assets/)
-presplash.filename = gas.png
-icon.filename = gas.png
+icon = gas.png
 
 [buildozer]
 log_level = 2
 warn_on_root = 1
+
+[android]
+android.api = 33
+android.minapi = 21
+android.ndk = 23.1.7779620
+android.sdk = 33
+android.arch = armeabi-v7a,arm64-v8a
+android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
+android.add_aars = 
+android.entrypoint = org.kivy.android.PythonActivity
+p4a.branch = master
+p4a.local_recipes = .
