@@ -44,15 +44,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install -f --fix-broken  # Fix broken packages early
           sudo apt-mark unhold libunwind8  # Temporarily unhold to allow libunwind-dev
-          sudo apt-get install -y --fix-missing --allow-downgrades --no-install-recommends --fix-broken libunwind-dev \  # Install dep first
+          # Install libunwind-dev first (dep for libgstreamer1.0-dev)
+          sudo apt-get install -y --fix-missing --allow-downgrades --no-install-recommends --fix-broken libunwind-dev
+          # Install GStreamer and related
+          sudo apt-get install -y --fix-missing --allow-downgrades --no-install-recommends --fix-broken libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev
+          # Install remaining deps
+          sudo apt-get install -y --fix-missing --allow-downgrades --no-install-recommends --fix-broken \
             git zip unzip openjdk-17-jdk-headless \
             build-essential python3-dev libffi-dev libssl-dev zlib1g-dev \
             libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev \
             libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev \
             liblzma-dev libgdbm-dev libnss3-dev libjpeg-dev libpng-dev \
             libcairo2-dev libpango1.0-dev pkg-config autoconf libtool \
-            libavcodec58 libavformat58 libswscale5 libgstreamer1.0-dev \
-            libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev \
+            libavcodec58 libavformat58 libswscale5 \
             libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev \
             gstreamer1.0-plugins-base gstreamer1.0-plugins-good
           sudo apt-mark hold libunwind8  # Re-hold after install
