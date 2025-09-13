@@ -16,9 +16,10 @@ warn_on_root = 1
 
 [android]
 android.api = 35
-android.minapi = 21
+android.minapi = 24
 android.ndk = 26.1.10909125
 android.sdk = 35
+android.build_tools = 35.0.0
 android.arch = armeabi-v7a,arm64-v8a
 android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
 android.add_aars = 
