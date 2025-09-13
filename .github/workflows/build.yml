@@ -59,21 +59,13 @@ jobs:
       - name: Install Buildozer dependencies
         run: pip install --user --upgrade cython==0.29.36 buildozer
 
-      - name: Update Android SDK (pin build-tools)
-        run: |
-          export PATH=$HOME/.local/bin:$PATH
-          # Assume SDK is at ~/.buildozer/android/platform/android-sdk; update if needed
-          yes | $ANDROIDSDK/tools/bin/sdkmanager --licenses  # Accept all
-          $ANDROIDSDK/tools/bin/sdkmanager "build-tools;34.0.0"  # Pin to match spec
-
       - name: Build APK
         run: |
           export PATH=$HOME/.local/bin:$PATH
-          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64  # Point to Java 17
-          export GRADLE_OPTS="-Xmx4096m -XX:MaxMetaspaceSize=512m"  # Heap boost for Gradle
+          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+          export GRADLE_OPTS="-Xmx4096m -XX:MaxMetaspaceSize=512m"
           buildozer -v android debug
-        env:
-          ANDROIDSDK: ${{ runner.temp }}/android-sdk
+        # Removed ANDROIDSDK env: Let Buildozer handle SDK download/path
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
