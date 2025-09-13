@@ -34,15 +34,22 @@ jobs:
 
     - name: Install Android SDK
       run: |
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O commandlinetools.zip
+        # Download latest Command Line Tools (2025 stable version ~13.0)
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O commandlinetools.zip
         unzip commandlinetools.zip -d cmdline-tools
-        mkdir -p android-sdk
-        mv cmdline-tools/cmdline-tools android-sdk/cmdline-tools
+        mkdir -p android-sdk/cmdline-tools/latest
+        mv cmdline-tools/cmdline-tools/* android-sdk/cmdline-tools/latest/
+        rm -rf cmdline-tools commandlinetools.zip
         export ANDROID_HOME=$PWD/android-sdk
-        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/bin
-        yes | sdkmanager --sdk_root=$ANDROID_HOME "platforms;android-33" "build-tools;33.0.2" "ndk;23.1.7779620"
+        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
+        # Install stable packages (updated to 2025 versions)
+        yes | sdkmanager --sdk_root=$ANDROID_HOME "platforms;android-35" "build-tools;35.0.0" "platform-tools" "ndk;26.1.10909125"
+        # Accept all licenses
+        yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses
         echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-        echo "PATH=$PATH:$ANDROID_HOME/cmdline-tools/bin" >> $GITHUB_ENV
+        echo "PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools" >> $GITHUB_ENV
+        # Verify installation
+        ls -la $ANDROID_HOME/build-tools/35.0.0/ | grep aidl || echo "Aidl check failed"
 
     - name: Build APK
       run: |
@@ -53,3 +60,4 @@ jobs:
       with:
         name: apk
         path: bin/*.apk
+        if-no-files-found: warn
