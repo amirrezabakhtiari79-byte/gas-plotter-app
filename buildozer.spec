@@ -1,67 +1,67 @@
 [app]
 
 # (str) Title of your application
-title = Data Plotter
+title = Gas Data Plotter
 
 # (str) Package name
-package.name = dataplotter
+package.name = gasplotter
 
-# (str) Package domain (needed for android/ios packaging)
-package.domain = org.example
+# (str) Package domain (needed for Android)
+package.domain = org.company.gasplotter
 
-# (str) Source code where the main.py live
+# (str) Source code directory
 source.dir = .
 
-# (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,ttf,txt
+# (list) Source files to include (py, graphics, fonts, data, etc.)
+source.include_exts = py,png,jpg,ttf,txt,json
 
-# (str) Application versioning (method 1)
+# (str) Application versioning scheme
 version = 1.0
 
-# (list) Garden requirements to install
-garden_requirements = graph
-
 # (list) Application requirements
-# comma separated e.g. requirements = sqlite3,kivy
+# This list is correct and includes the Pango text provider.
 requirements = python3,kivy==2.1.0,kivy-garden.graph,fpdf,arabic_reshaper,python-bidi,kivy_text_provider_pango
+
+# (str) Presplash image
+presplash.filename = %(source.dir)s/gas.png
 
 # (str) Icon of the application
 icon.filename = %(source.dir)s/gas.png
 
-# (str) Supported orientation (one of landscape, sensorlandscape, portrait or all)
+# (str) Supported orientation
 orientation = portrait
 
-# (bool) Indicate if the application should be fullscreen or not
-fullscreen = 0
 
-# (list) Permissions
-android.permissions = INTERNET,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
+[android]
 
-# (int) Target Android API, should be as high as possible.
-android.api = 30
+# (list) The Android archs to build for. arm64-v8a is required for the Play Store.
+android.archs = arm64-v8a
 
-# (int) Minimum API your APK / AAB will support.
+# (list) Android permissions
+android.permissions = INTERNET
+
+# --- This section fixes the build error ---
+# (int) Android API to target. 34 is the modern standard for new apps.
+android.api = 34
+
+# (int) Minimum API level your app supports (Android 5.0)
 android.minapi = 21
 
-# (int) Android NDK API to use. This is the minimum API your app will support, it should usually equal android.minapi.
-android.ndk_api = 21
+# (str) Android NDK version to use. 25b is a stable choice.
+android.ndk = 25b
 
-# (bool) If True, then automatically accept SDK license agreements.
+# (str) Android build tools version. 34.0.0 is the corresponding modern version.
+android.build_tools = 34.0.0
+# --- End of fix ---
+
+# (bool) Accept the SDK license agreements automatically
 android.accept_sdk_license = True
 
-# (list) Android archs to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
-android.archs = arm64-v8a, armeabi-v7a
-
-# (str) python-for-android branch to use, defaults to master
-#p4a.branch = master
-
-# (str) Bootstrap to use for android builds
-p4a.bootstrap = sdl2
 
 [buildozer]
 
-# (int) Log level (0 = error only, 1 = info, 2 = debug (with command output))
+# (int) Log level (2 = very verbose for debugging)
 log_level = 2
 
-# (int) Display warning if buildozer is run as root (0 = False, 1 = True)
+# (int) Display warning if buildozer is run as root
 warn_on_root = 1
