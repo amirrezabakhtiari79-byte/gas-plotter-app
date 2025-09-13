@@ -46,9 +46,6 @@ android.minapi = 21
 # (int) Android NDK API to use. This is the minimum API your app will support, it should usually equal android.minapi.
 android.ndk_api = 21
 
-# (str) Android SDK directory (if empty, it will be automatically downloaded.)
-android.sdk_path = /usr/local/lib/android/sdk
-
 # (bool) If True, then automatically accept SDK license agreements.
 android.accept_sdk_license = True
 
