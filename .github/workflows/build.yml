@@ -62,7 +62,8 @@ jobs:
       - name: Build APK
         run: |
           export PATH=$HOME/.local/bin:$PATH
-          buildozer android clean  # Force clean to avoid cache issues
+          # Removed 'buildozer android clean' to avoid FileNotFoundError on missing p4a dir
+          # Cache handles resets; use 'buildozer android distclean' manually if full wipe needed
           buildozer -v android debug
         env:
           ANDROIDSDK: ${{ runner.temp }}/android-sdk
