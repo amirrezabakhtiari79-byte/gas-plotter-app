@@ -51,23 +51,4 @@ jobs:
             libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev \
             liblzma-dev libgdbm-dev libnss3-dev libjpeg-dev libpng-dev \
             libcairo2-dev libpango1.0-dev pkg-config autoconf libtool \
-            libavcodec58 libavformat58 libswscale5 libgstreamer1.0-dev libunwind-dev \
-            libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev \
-            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev \
-            gstreamer1.0-plugins-base gstreamer1.0-plugins-good
-
-      - name: Install Buildozer dependencies
-        run: pip install --user --upgrade cython==0.29.36 buildozer
-
-      - name: Build APK
-        run: |
-          export PATH=$HOME/.local/bin:$PATH
-          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-          export GRADLE_OPTS="-Xmx4096m -XX:MaxMetaspaceSize=512m"
-          buildozer -v android debug
-
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-apk-${{ steps.get-date.outputs.date }}
-          path: bin/*.apk
+            libavcodec58 libavformat58 libswscale5 libgstreamer1.
