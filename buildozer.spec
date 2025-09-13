@@ -1,66 +1,25 @@
 [app]
-
-# (str) Title of your application
-title = Gas Data Plotter
-
-# (str) Package name
-package.name = gasplotter
-
-# (str) Package domain (needed for Android)
-package.domain = org.company.gasplotter
-
-# (str) Source code directory
+title = DataPlotter
+package.name = dataplotter
+package.domain = org.example
 source.dir = .
-
-# (list) Source files to include (py, graphics, fonts, data, etc.)
-source.include_exts = py,png,jpg,ttf,txt,json
-
-# (str) Application versioning scheme
-version = 1.0
-
-# (list) Application requirements
-# This list is now simplified to the core needs of your app.
-requirements = python3,kivy==2.1.0,kivy-garden.graph,fpdf
-
-# (str) Presplash image
-presplash.filename = %(source.dir)s/gas.png
-
-# (str) Icon of the application
-icon.filename = %(source.dir)s/gas.png
-
-# (str) Supported orientation
+source.include_exts = py,png,jpg,kv,json
+version = 0.1
+requirements = python3,kivy,kivy_garden.graph,fpdf,android
+garden_requirements = graph
 orientation = portrait
-
-
-[android]
-
-# (list) The Android archs to build for. arm64-v8a is required for the Play Store.
-android.archs = arm64-v8a
-
-# (list) Android permissions needed for file saving/reading.
-android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
-
-# (int) Android API to target. 34 is the modern standard for new apps.
-android.api = 34
-
-# (int) Minimum API level your app supports (Android 5.0)
+fullscreen = 0
+android.permissions = WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
+android.api = 31
 android.minapi = 21
-
-# (str) Android NDK version to use. 25b is a stable choice.
-android.ndk = 25b
-
-# (str) Android build tools version. 34.0.0 is the corresponding modern version.
-android.build_tools = 34.0.0
-
-# (bool) Accept the SDK license agreements automatically
-android.accept_sdk_license = True
-
+android.sdk = 31
+android.ndk = 23b
+android.archs = arm64-v8a, armeabi-v7a
+android.ndk_api = 21
+# Assets (your gas.png must be in same folder or assets/)
+presplash.filename = gas.png
+icon.filename = gas.png
 
 [buildozer]
-
-# (int) Log level (2 = very verbose for debugging)
 log_level = 2
-
-# (int) Display warning if buildozer is run as root
 warn_on_root = 1
-```
