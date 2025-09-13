@@ -6,7 +6,7 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
 source.include_patterns = gas.png,data.txt
 version = 1.0
-requirements = python3,hostpython3,kivy==2.2.1,kivy-garden.graph,statistics,fpdf,pyjnius,hashlib
+requirements = python3,hostpython3,kivy==2.2.1,kivy-garden.graph,fpdf,pyjnius
 orientation = portrait
 icon = gas.png
 
@@ -15,10 +15,10 @@ log_level = 2
 warn_on_root = 1
 
 [android]
-android.api = 33
+android.api = 35
 android.minapi = 21
-android.ndk = 23.1.7779620
-android.sdk = 33
+android.ndk = 26.1.10909125
+android.sdk = 35
 android.arch = armeabi-v7a,arm64-v8a
 android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
 android.add_aars = 
