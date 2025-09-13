@@ -59,26 +59,9 @@ jobs:
       - name: Install Buildozer dependencies
         run: pip install --user --upgrade cython==0.29.36 buildozer
 
-      - name: Setup Android SDK (install cmdline-tools and accept licenses)
-        run: |
-          export ANDROID_HOME=/usr/local/lib/android/sdk
-          mkdir -p $ANDROID_HOME/cmdline-tools
-          cd $ANDROID_HOME/cmdline-tools
-          # Download reliable version (11.0, from archives)
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          unzip -q commandlinetools-linux-11076708_latest.zip
-          mv cmdline-tools latest
-          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
-          # Accept licenses
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
-          # Install platform-tools and API 30 (matching spec)
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-30"
-
       - name: Build APK
         run: |
           export PATH=$HOME/.local/bin:$PATH
-          export ANDROID_HOME=/usr/local/lib/android/sdk
-          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
           export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
           export GRADLE_OPTS="-Xmx4096m -XX:MaxMetaspaceSize=512m"
           buildozer -v android debug
