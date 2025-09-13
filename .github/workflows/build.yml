@@ -64,6 +64,7 @@ jobs:
           export ANDROID_HOME=/usr/local/lib/android/sdk
           mkdir -p $ANDROID_HOME/cmdline-tools
           cd $ANDROID_HOME/cmdline-tools
+          # Download reliable version (11.0, from archives)
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
           unzip -q commandlinetools-linux-11076708_latest.zip
           mv cmdline-tools latest
