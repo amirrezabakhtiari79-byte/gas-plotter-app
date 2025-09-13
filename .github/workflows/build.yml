@@ -1,39 +1,55 @@
-name: Build Kivy APK
+name: Build APK
 
 on:
-  workflow_dispatch: # run manually
   push:
+    branches:
+      - main
+  pull_request:
     branches:
       - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Install system dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y python3-pip openjdk-17-jdk unzip git wget
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
 
-      - name: Install buildozer & Cython
-        run: |
-          pip install --upgrade pip
-          pip install buildozer cython
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-pip python3-dev python3-setuptools
+        sudo apt-get install -y openjdk-17-jdk
+        sudo apt-get install -y build-essential libssl-dev libffi-dev
+        sudo apt-get install -y zlib1g-dev libncurses5-dev libncursesw5-dev
+        sudo apt-get install -y libreadline-dev libsqlite3-dev liblzma-dev
+        pip install --upgrade pip
+        pip install buildozer cython==0.29.36
 
-      - name: Initialize buildozer
-        run: buildozer init
+    - name: Install Android SDK
+      run: |
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O commandlinetools.zip
+        unzip commandlinetools.zip -d cmdline-tools
+        mkdir -p android-sdk
+        mv cmdline-tools/cmdline-tools android-sdk/cmdline-tools
+        export ANDROID_HOME=$PWD/android-sdk
+        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/bin
+        yes | sdkmanager --sdk_root=$ANDROID_HOME "platforms;android-33" "build-tools;33.0.2" "ndk;23.1.7779620"
+        echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+        echo "PATH=$PATH:$ANDROID_HOME/cmdline-tools/bin" >> $GITHUB_ENV
 
-      - name: Copy custom spec
-        run: cp buildozer.spec ./buildozer.spec
+    - name: Build APK
+      run: |
+        buildozer -v android debug
 
-      - name: Build APK
-        run: buildozer android debug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v3
-        with:
-          name: dataplotter-apk
-          path: bin/*.apk
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: apk
+        path: bin/*.apk
