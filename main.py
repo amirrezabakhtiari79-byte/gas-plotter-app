@@ -23,23 +23,36 @@ import json
 import hashlib
 from fpdf import FPDF
 
-# Farsi Text Shaping Libraries
+# --- UPDATED: Graceful Farsi Text Shaping ---
+# This new section prevents crashes if the libraries are not available.
+ARABIC_RESHAPER_AVAILABLE = False
+BIDI_AVAILABLE = False
 try:
     import arabic_reshaper
+    ARABIC_RESHAPER_AVAILABLE = True
+    print("Successfully imported arabic_reshaper.")
+except ImportError as e:
+    print(f"WARNING: Could not import arabic_reshaper. Farsi reshaping disabled. Error: {e}")
+
+try:
     from bidi.algorithm import get_display
-    print("Successfully imported Farsi shaping libraries.")
-except Exception as e:
-    print(f"CRITICAL ERROR: Could not import Farsi libraries. PDF will not work. Error: {e}")
-    def _shape_text(s):
-        return s
+    BIDI_AVAILABLE = True
+    print("Successfully imported bidi.")
+except ImportError as e:
+    print(f"WARNING: Could not import bidi. Farsi display adjustment disabled. Error: {e}")
 
 def _shape_text(s):
+    if not ARABIC_RESHAPER_AVAILABLE or not BIDI_AVAILABLE:
+        # This will now just return the string, preventing a crash.
+        # Pango will still attempt to render it correctly Right-to-Left.
+        return str(s)
     try:
         reshaped_text = arabic_reshaper.reshape(s)
         return get_display(reshaped_text)
     except Exception as e:
         print(f"ERROR: Failed to shape Farsi text. Text: '{s}'. Error: {e}")
-        return s
+        return str(s)
+# --- END UPDATE ---
 
 CONFIG_FILE = 'config.json'
 LIGHT_BLUE = (0.55, 0.8, 0.9, 1)
@@ -105,66 +118,7 @@ LANGUAGES = {
         "confirm_removal": "Confirm Removal",
         "cancel": "Cancel",
     },
-    "Farsi": {
-        "main_menu": "منو اصلی",
-        "login": "ورود",
-        "settings": "تنظیمات",
-        "exit": "خروج",
-        "password_prompt": "لطفاً رمز عبور خود را وارد کنید:",
-        "error": "خطا",
-        "incorrect_password": "رمز اشتباه است.",
-        "pressure_vs_time": "فشار در برابر زمان",
-        "error_data": "خطا: فایل داده یافت نشد یا خالی است.",
-        "max": "بیشینه",
-        "min": "کمینه",
-        "avg": "میانگین",
-        "save_png_word": "ذخیره",
-        "save_png_ext": "PNG",
-        "save_jpg_word": "ذخیره",
-        "save_jpg_ext": "JPG",
-        "save_pdf_word": "ذخیره",
-        "save_pdf_ext": "PDF",
-        "back_menu": "بازگشت به منو",
-        "settings_title": "تنظیمات",
-        "appearance": "ظاهر",
-        "security": "امنیت",
-        "language": "زبان",
-        "back_main": "بازگشت به منو اصلی",
-        "security_options": "گزینه‌های امنیتی",
-        "change_password": "ایجاد/تغییر رمز",
-        "back_settings": "بازگشت به تنظیمات",
-        "passwords_empty": "فیلدهای رمز عبور نمی‌توانند خالی باشند.",
-        "passwords_not_match": "رمزها مطابقت ندارند.",
-        "password_set": "رمز با موفقیت ثبت شد.",
-        "password_removed": "رمز حذف شد.",
-        "missing_font_instruction": "یک فونت فارسی (مثلاً Vazir.ttf) در پوشه برنامه قرار دهید و برنامه را دوباره اجرا کنید.",
-        "time": "زمان",
-        "pressure_pa": "فشار",
-        "theme": "قالب",
-        "graph_color": "رنگ نمودار",
-        "title_font_size": "اندازه فونت عنوان",
-        "save_and_back": "ذخیره و بازگشت",
-        "light": "روشن",
-        "dark": "تیره",
-        "toggle_theme": "تغییر قالب",
-        "new_password": "رمز جدید را وارد کنید",
-        "confirm_password": "تأیید رمز",
-        "set_change": "ثبت/تغییر",
-        "remove": "حذف",
-        "back_to_settings": "بازگشت به تنظیمات",
-        "color_orange": "نارنجی",
-        "color_blue": "آبی",
-        "color_green": "سبز",
-        "lang_choose": "انتخاب زبان",
-        "lang_english": "انگلیسی",
-        "lang_farsi": "فارسی",
-        "lang_restart_required": "زبان برنامه تغییر کرد.",
-        "restart_required_title": "زبان تغییر کرد",
-        "ok": "باشه",
-        "enter_current_password": "برای تایید رمز فعلی را وارد کنید",
-        "confirm_removal": "تایید حذف",
-        "cancel": "لغو",
-    }
+    # --- NOTE: Farsi translations removed as per your previous request ---
 }
 
 def load_config():
@@ -249,8 +203,6 @@ class DataPlotterApp(App):
         self.apply_theme()
         FONT_MANAGER.try_register()
         
-        # self.fpm = FingerprintManager(self) <-- REMOVED
-        
         self.sm = ScreenManager()
         self.sm.add_widget(EntryScreen(name='entry', app=self))
         self.sm.add_widget(PasswordScreen(name='password', app=self))
@@ -270,7 +222,9 @@ class DataPlotterApp(App):
         Window.clearcolor = self.theme_background
         
     def t(self, key):
-        lang = self.config.get('language', 'English'); return LANGUAGES.get(lang, LANGUAGES['English']).get(key, key)
+        # Default to English if a language pack is missing (e.g., Farsi was removed)
+        lang = self.config.get('language', 'English')
+        return LANGUAGES.get(lang, LANGUAGES['English']).get(key, key)
         
     def is_farsi_mode(self): return self.config.get('language', 'English') == 'Farsi'
     
@@ -339,13 +293,11 @@ class PasswordScreen(BaseScreen):
         self.info_label = Label(font_size='18sp')
         self.password_input = TextInput(password=True, multiline=False, font_size='20sp', size_hint_y=None, height=40)
         self.submit_button = Button(font_size='20sp', size_hint_y=None, height=50, on_press=self.check_password)
-        # self.fingerprint_button = ... <-- REMOVED
         self.back_button = Button(font_size='18sp', size_hint_y=None, height=40, on_press=self.go_back)
         
         self.layout.add_widget(self.info_label)
         self.layout.add_widget(self.password_input)
         self.layout.add_widget(self.submit_button)
-        # self.layout.add_widget(self.fingerprint_button) <-- REMOVED
         self.layout.add_widget(self.back_button)
         self.add_widget(self.layout)
 
@@ -463,7 +415,12 @@ class SettingsMenuScreen(BaseScreen):
         font = self.app.get_font()
         content = BoxLayout(orientation='vertical', spacing=10, padding=10)
         btn_en = Button(text="English", font_name='Roboto')
-        btn_fa = Button(text=_shape_text("فارسی"), font_name=FONT_MANAGER.font_name if FONT_MANAGER.available() else 'Roboto')
+        
+        # NOTE: This button is kept for UI consistency, but there's no Farsi translation to switch to.
+        # You could hide or disable this button if you only plan to support English.
+        btn_fa = Button(text="Farsi (Disabled)", font_name=FONT_MANAGER.font_name if FONT_MANAGER.available() else 'Roboto')
+        btn_fa.disabled = True 
+        
         popup = Popup(title=self.app.ms(self.app.t("lang_choose")), content=content, size_hint=(None, None), size=(300, 200), title_font=font)
         def set_lang_and_update(lang):
             popup.dismiss()
@@ -472,7 +429,7 @@ class SettingsMenuScreen(BaseScreen):
                 save_config(self.app.config)
                 self.update_ui_text_and_fonts()
         btn_en.bind(on_press=lambda x: set_lang_and_update("English"))
-        btn_fa.bind(on_press=lambda x: set_lang_and_update("Farsi"))
+        # btn_fa.bind(on_press=lambda x: set_lang_and_update("Farsi"))
         content.add_widget(btn_en); content.add_widget(btn_fa)
         popup.open()
 
@@ -482,12 +439,10 @@ class SecurityScreen(BaseScreen):
         layout = BoxLayout(orientation='vertical', spacing=20, padding=50)
         self.title = Label(font_size='30sp', bold=True)
         self.change_pass_btn = Button(font_size='20sp', on_press=lambda x: setattr(self.manager, 'current', 'password_settings'))
-        # self.fingerprint_btn = ... <-- REMOVED
         self.back_btn = Button(font_size='20sp', on_press=lambda x: setattr(self.manager, 'current', 'settings_menu'))
         
         layout.add_widget(self.title)
         layout.add_widget(self.change_pass_btn)
-        # layout.add_widget(self.fingerprint_btn) <-- REMOVED
         layout.add_widget(self.back_btn)
         self.add_widget(layout)
 
