@@ -1,4 +1,4 @@
-name: Build Android APK (Final Version)
+name: Build Android APK
 
 on:
 push:
@@ -22,17 +22,13 @@ steps:
     run: |
       sudo chown -R kivy:kivy .
   
-  # --- CRITICAL FIX: Manually install the required Android build-tools ---
   - name: Manually install Android build-tools 34.0.0
+    # This step prevents "aidl not found" errors by ensuring the build tools are installed.
     run: |
-      # The sdkmanager is the official command-line tool to manage Android SDK components.
-      # This command is a direct order to install version 34.0.0 of the build-tools.
-      # The 'yes |' part automatically accepts the license agreement.
       yes | sdkmanager "build-tools;34.0.0"
-  # --- END OF FIX ---
 
   - name: Build the APK with Buildozer
-    # Now, when buildozer runs, the build-tools folder will already exist.
+    # This command will read all settings from your buildozer.spec file.
     run: |
       buildozer -v android debug
 
