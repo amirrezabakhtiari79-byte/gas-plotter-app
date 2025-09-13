@@ -1,89 +1,70 @@
-name: Build APK
+[app]
 
-on:
-  push:
-    branches:
-      - main
+# (str) Title of your application
+title = Data Plotter
 
-jobs:
-  build:
-    runs-on: ubuntu-22.04
+# (str) Package name
+package.name = dataplotter
 
-    steps:
-      - uses: actions/checkout@v4
+# (str) Package domain (needed for android/ios packaging)
+package.domain = org.example
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
+# (str) Source code where the main.py live
+source.dir = .
 
-      - name: Get Date
-        id: get-date
-        run: echo "date=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
-        shell: bash
+# (list) Source files to include (let empty to include all the files)
+source.include_exts = py,png,ttf,txt
 
-      - name: Cache Buildozer global directory
-        uses: actions/cache@v4
-        with:
-          path: ~/.buildozer_global
-          key: buildozer-global-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
-          restore-keys: |
-            buildozer-global-${{ runner.os }}-
+# (str) Application versioning (method 1)
+version = 1.0
 
-      - name: Cache Buildozer directory
-        uses: actions/cache@v4
-        with:
-          path: .buildozer
-          key: ${{ runner.os }}-buildozer-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
-          restore-keys: |
-            ${{ runner.os }}-buildozer-${{ steps.get-date.outputs.date }}-
-            ${{ runner.os }}-buildozer-
+# (list) Garden requirements to install
+garden_requirements = graph
 
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -f
-          sudo apt-mark hold libunwind8
-          sudo apt-get install -y --fix-missing --allow-downgrades --no-install-recommends \
-            git zip unzip openjdk-17-jdk-headless \
-            build-essential python3-dev libffi-dev libssl-dev zlib1g-dev \
-            libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev \
-            libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev \
-            liblzma-dev libgdbm-dev libnss3-dev libjpeg-dev libpng-dev \
-            libcairo2-dev libpango1.0-dev pkg-config autoconf libtool \
-            libavcodec58 libavformat58 libswscale5 libgstreamer1.0-dev libunwind-dev \
-            libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev \
-            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev \
-            gstreamer1.0-plugins-base gstreamer1.0-plugins-good
+# (list) Application requirements
+# comma separated e.g. requirements = sqlite3,kivy
+requirements = python3,kivy,pango,fpdf,kivy-garden.graph,arabic-reshaper,python-bidi,kivy_text_provider_pango
 
-      - name: Install Buildozer dependencies
-        run: pip install --user --upgrade cython==0.29.36 buildozer
+# (str) Icon of the application
+icon.filename = %(source.dir)s/gas.png
 
-      - name: Setup Android SDK (install cmdline-tools and accept licenses)
-        run: |
-          export ANDROID_HOME=/usr/local/lib/android/sdk
-          mkdir -p $ANDROID_HOME/cmdline-tools
-          cd $ANDROID_HOME/cmdline-tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          unzip -q commandlinetools-linux-11076708_latest.zip
-          mv cmdline-tools latest
-          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
-          # Accept licenses
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
-          # Install platform-tools and API 30 (matching spec)
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-30"
+# (str) Supported orientation (one of landscape, sensorlandscape, portrait or all)
+orientation = portrait
 
-      - name: Build APK
-        run: |
-          export PATH=$HOME/.local/bin:$PATH
-          export ANDROID_HOME=/usr/local/lib/android/sdk
-          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
-          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-          export GRADLE_OPTS="-Xmx4096m -XX:MaxMetaspaceSize=512m"
-          buildozer -v android debug
+# (bool) Indicate if the application should be fullscreen or not
+fullscreen = 0
 
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-apk-${{ steps.get-date.outputs.date }}
-          path: bin/*.apk
+# (list) Permissions
+android.permissions = INTERNET,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
+
+# (int) Target Android API, should be as high as possible.
+android.api = 30
+
+# (int) Minimum API your APK / AAB will support.
+android.minapi = 21
+
+# (int) Android NDK API to use. This is the minimum API your app will support, it should usually equal android.minapi.
+android.ndk_api = 21
+
+# (str) Android SDK directory (if empty, it will be automatically downloaded.)
+android.sdk_path = /usr/local/lib/android/sdk
+
+# (bool) If True, then automatically accept SDK license agreements.
+android.accept_sdk_license = True
+
+# (list) Android archs to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
+android.archs = arm64-v8a, armeabi-v7a
+
+# (str) python-for-android branch to use, defaults to master
+#p4a.branch = master
+
+# (str) Bootstrap to use for android builds
+p4a.bootstrap = sdl2
+
+[buildozer]
+
+# (int) Log level (0 = error only, 1 = info, 2 = debug (with command output))
+log_level = 2
+
+# (int) Display warning if buildozer is run as root (0 = False, 1 = True)
+warn_on_root = 1
