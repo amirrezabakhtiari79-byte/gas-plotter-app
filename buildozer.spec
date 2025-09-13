@@ -23,7 +23,7 @@ garden_requirements = graph
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy,pango,fpdf,kivy-garden.graph,arabic_reshaper,python-bidi,kivy_text_provider_pango
+requirements = python3,kivy,pango,fpdf,kivy-garden.graph,arabic-reshaper,python-bidi,kivy_text_provider_pango
 
 # (str) Icon of the application
 icon.filename = %(source.dir)s/gas.png
@@ -38,13 +38,16 @@ fullscreen = 0
 android.permissions = INTERNET,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
 
 # (int) Target Android API, should be as high as possible.
-android.api = 33
+android.api = 30
 
 # (int) Minimum API your APK / AAB will support.
 android.minapi = 21
 
 # (int) Android NDK API to use. This is the minimum API your app will support, it should usually equal android.minapi.
 android.ndk_api = 21
+
+# (str) Android SDK directory (if empty, it will be automatically downloaded.)
+android.sdk_path = /usr/local/lib/android/sdk
 
 # (bool) If True, then automatically accept SDK license agreements.
 android.accept_sdk_license = True
