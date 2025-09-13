@@ -23,7 +23,7 @@ garden_requirements = graph
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy,pango,fpdf,arabic-reshaper,bidi
+requirements = python3,kivy,pango,fpdf
 
 # (str) Icon of the application
 icon.filename = %(source.dir)s/gas.png
@@ -31,7 +31,7 @@ icon.filename = %(source.dir)s/gas.png
 # (str) Supported orientation (one of landscape, sensorlandscape, portrait or all)
 orientation = portrait
 
-# (bool) Indicate if the application should be fullscreen or not
+# (bool) Indicate if the application should fullscreen or not
 fullscreen = 0
 
 # (list) Permissions
