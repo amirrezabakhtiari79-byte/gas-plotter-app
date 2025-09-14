@@ -30,57 +30,23 @@ LIGHT_BLUE = (0.55, 0.8, 0.9, 1)
 
 LANGUAGES = {
     "English": {
-        "main_menu": "Main Menu",
-        "login": "Login",
-        "settings": "Settings",
-        "exit": "Exit",
-        "password_prompt": "Please enter your password:",
-        "error": "Error",
-        "incorrect_password": "Incorrect password.",
-        "pressure_vs_time": "Pressure vs. Time",
-        "error_data": "Error: data.txt not found or is empty.",
-        "max": "Max",
-        "min": "Min",
-        "avg": "Avg",
-        "save_png_word": "Save",
-        "save_png_ext": "PNG",
-        "save_jpg_word": "Save",
-        "save_jpg_ext": "JPG",
-        "save_pdf_word": "Save",
-        "save_pdf_ext": "PDF",
-        "back_menu": "Back to Menu",
-        "settings_title": "Settings",
-        "appearance": "Appearance",
-        "security": "Security",
-        "back_main": "Back to Main Menu",
-        "security_options": "Security Options",
-        "change_password": "Create/Change Password",
-        "back_settings": "Back to Settings Menu",
-        "passwords_empty": "Password fields cannot be empty.",
-        "passwords_not_match": "Passwords do not match.",
-        "password_set": "Password has been set.",
-        "password_removed": "Password has been removed.",
-        "time": "Time",
-        "pressure_pa": "Pressure (Pa)",
-        "theme": "Theme",
-        "graph_color": "Graph Color",
-        "title_font_size": "Title Font Size",
-        "save_and_back": "Save and Back",
-        "light": "Light",
-        "dark": "Dark",
-        "toggle_theme": "Toggle Theme",
-        "new_password": "Enter new password",
-        "confirm_password": "Confirm password",
-        "set_change": "Set/Change",
-        "remove": "Remove",
-        "back_to_settings": "Back to Settings Menu",
-        "color_orange": "Orange",
-        "color_blue": "Blue",
-        "color_green": "Green",
-        "ok": "OK",
-        "enter_current_password": "Enter current password to confirm",
-        "confirm_removal": "Confirm Removal",
-        "cancel": "Cancel",
+        "main_menu": "Main Menu", "login": "Login", "settings": "Settings", "exit": "Exit",
+        "password_prompt": "Please enter your password:", "error": "Error", "incorrect_password": "Incorrect password.",
+        "pressure_vs_time": "Pressure vs. Time", "error_data": "Error: data.txt not found or is empty.",
+        "max": "Max", "min": "Min", "avg": "Avg", "save_png_word": "Save", "save_png_ext": "PNG",
+        "save_jpg_word": "Save", "save_jpg_ext": "JPG", "save_pdf_word": "Save", "save_pdf_ext": "PDF",
+        "back_menu": "Back to Menu", "settings_title": "Settings", "appearance": "Appearance",
+        "security": "Security", "back_main": "Back to Main Menu", "security_options": "Security Options",
+        "change_password": "Create/Change Password", "back_settings": "Back to Settings Menu",
+        "passwords_empty": "Password fields cannot be empty.", "passwords_not_match": "Passwords do not match.",
+        "password_set": "Password has been set.", "password_removed": "Password has been removed.",
+        "time": "Time", "pressure_pa": "Pressure (Pa)", "theme": "Theme", "graph_color": "Graph Color",
+        "title_font_size": "Title Font Size", "save_and_back": "Save and Back", "light": "Light",
+        "dark": "Dark", "toggle_theme": "Toggle Theme", "new_password": "Enter new password",
+        "confirm_password": "Confirm password", "set_change": "Set/Change", "remove": "Remove",
+        "back_to_settings": "Back to Settings Menu", "color_orange": "Orange", "color_blue": "Blue",
+        "color_green": "Green", "ok": "OK", "enter_current_password": "Enter current password to confirm",
+        "confirm_removal": "Confirm Removal", "cancel": "Cancel",
     },
 }
 
@@ -142,8 +108,19 @@ class DataPlotterApp(App):
         self.sm.add_widget(AppearanceSettingsScreen(name='appearance_settings', app=self))
         self.sm.add_widget(PasswordSettingsScreen(name='password_settings', app=self))
         self.sm.add_widget(SecurityScreen(name='security_screen', app=self))
-        self.sm.current = 'entry'
+        # self.sm.current = 'entry' <-- REMOVED FROM HERE
         return self.sm
+
+    # --- FIX: Added on_start method to prevent black screen ---
+    def on_start(self):
+        """
+        This method is called after build() returns and the event loop is running.
+        We schedule the switch to the first screen here to ensure the UI draws correctly.
+        """
+        def _post_build_init(dt):
+            self.sm.current = 'entry'
+        
+        Clock.schedule_once(_post_build_init, 0)
         
     def apply_theme(self):
         if self.config.get('theme') == 'Dark':
@@ -259,26 +236,19 @@ class PlotScreen(BaseScreen):
         self.title_label.text = self.app.t("pressure_vs_time")
         back_button.text = self.app.t("back_menu")
         self.update_ui_text_and_fonts()
-        
     def load_data(self):
         data_points, time_values, pressure_values = [], [], []
         try:
             with open('data.txt', 'r', encoding='utf-8') as f:
-                next(f) # Skip header
+                next(f)
                 for line in f:
                     parts = line.strip().split()
                     if len(parts) == 2:
                         time, pressure = float(parts[0]), float(parts[1])
-                        data_points.append((time, pressure))
-                        time_values.append(time)
-                        pressure_values.append(pressure)
+                        data_points.append((time, pressure)); time_values.append(time); pressure_values.append(pressure)
         except Exception as e:
-            # --- FIX: Added error logging to find the root cause ---
             print(f"CRITICAL: Failed to load or parse data.txt. Error: {e}")
-            # This will print the exact error (e.g., FileNotFoundError, PermissionError, ValueError) to the logcat.
-        
         return data_points, time_values, pressure_values
-        
     def create_stats_layout(self, pressure_values):
         stats_layout = BoxLayout(size_hint_y=None, height=30)
         max_p = Label(color=self.app.theme_text_color); min_p = Label(color=self.app.theme_text_color); avg_p = Label(color=self.app.theme_text_color)
@@ -288,7 +258,6 @@ class PlotScreen(BaseScreen):
         min_p.text = f"{self.app.t('min')}: {min_val:.2f}"
         avg_p.text = f"{self.app.t('avg')}: {avg_val:.2f}"
         return stats_layout
-        
     def create_graph(self, data_points, time_values, pressure_values):
         xlabel = self.app.t("time"); ylabel = self.app.t("pressure_pa")
         xmaj = (max(time_values) - min(time_values)) / 10 if time_values and max(time_values) != min(time_values) else 1
@@ -302,7 +271,6 @@ class PlotScreen(BaseScreen):
         plot = LinePlot(color=self.app.config['graph_color'], line_width=2); plot.points = data_points
         graph.add_plot(plot)
         return graph
-        
     def create_export_layout(self):
         export_layout = BoxLayout(size_hint_y=None, height=50, spacing=10)
         btn_png = DualLabelButton("save_png_word", "save_png_ext", on_press_callback=lambda x: self.export_graph('png'), app=self.app)
@@ -310,9 +278,7 @@ class PlotScreen(BaseScreen):
         btn_pdf = DualLabelButton("save_pdf_word", "save_pdf_ext", on_press_callback=lambda x: self.export_graph('pdf'), app=self.app)
         export_layout.add_widget(btn_png); export_layout.add_widget(btn_jpg); export_layout.add_widget(btn_pdf)
         return export_layout
-        
     def export_graph(self, file_format):
-        # NOTE: fpdf export is complex. This is a placeholder. A full implementation would go here.
         print(f"Exporting to {file_format} is not fully implemented yet.")
         pass
 
