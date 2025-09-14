@@ -259,18 +259,26 @@ class PlotScreen(BaseScreen):
         self.title_label.text = self.app.t("pressure_vs_time")
         back_button.text = self.app.t("back_menu")
         self.update_ui_text_and_fonts()
+        
     def load_data(self):
         data_points, time_values, pressure_values = [], [], []
         try:
             with open('data.txt', 'r', encoding='utf-8') as f:
-                next(f)
+                next(f) # Skip header
                 for line in f:
                     parts = line.strip().split()
                     if len(parts) == 2:
                         time, pressure = float(parts[0]), float(parts[1])
-                        data_points.append((time, pressure)); time_values.append(time); pressure_values.append(pressure)
-        except Exception: pass
+                        data_points.append((time, pressure))
+                        time_values.append(time)
+                        pressure_values.append(pressure)
+        except Exception as e:
+            # --- FIX: Added error logging to find the root cause ---
+            print(f"CRITICAL: Failed to load or parse data.txt. Error: {e}")
+            # This will print the exact error (e.g., FileNotFoundError, PermissionError, ValueError) to the logcat.
+        
         return data_points, time_values, pressure_values
+        
     def create_stats_layout(self, pressure_values):
         stats_layout = BoxLayout(size_hint_y=None, height=30)
         max_p = Label(color=self.app.theme_text_color); min_p = Label(color=self.app.theme_text_color); avg_p = Label(color=self.app.theme_text_color)
@@ -280,6 +288,7 @@ class PlotScreen(BaseScreen):
         min_p.text = f"{self.app.t('min')}: {min_val:.2f}"
         avg_p.text = f"{self.app.t('avg')}: {avg_val:.2f}"
         return stats_layout
+        
     def create_graph(self, data_points, time_values, pressure_values):
         xlabel = self.app.t("time"); ylabel = self.app.t("pressure_pa")
         xmaj = (max(time_values) - min(time_values)) / 10 if time_values and max(time_values) != min(time_values) else 1
@@ -293,6 +302,7 @@ class PlotScreen(BaseScreen):
         plot = LinePlot(color=self.app.config['graph_color'], line_width=2); plot.points = data_points
         graph.add_plot(plot)
         return graph
+        
     def create_export_layout(self):
         export_layout = BoxLayout(size_hint_y=None, height=50, spacing=10)
         btn_png = DualLabelButton("save_png_word", "save_png_ext", on_press_callback=lambda x: self.export_graph('png'), app=self.app)
@@ -300,8 +310,11 @@ class PlotScreen(BaseScreen):
         btn_pdf = DualLabelButton("save_pdf_word", "save_pdf_ext", on_press_callback=lambda x: self.export_graph('pdf'), app=self.app)
         export_layout.add_widget(btn_png); export_layout.add_widget(btn_jpg); export_layout.add_widget(btn_pdf)
         return export_layout
+        
     def export_graph(self, file_format):
-        pass # PDF Export logic would go here
+        # NOTE: fpdf export is complex. This is a placeholder. A full implementation would go here.
+        print(f"Exporting to {file_format} is not fully implemented yet.")
+        pass
 
 class SettingsMenuScreen(BaseScreen):
     def __init__(self, **kwargs):
@@ -418,7 +431,7 @@ class PasswordSettingsScreen(BaseScreen):
         self.pass_input1.text = ""; self.pass_input2.text = ""
         self.app.show_info_popup("main_menu", "password_set")
     def remove_password(self, instance):
-        pass # remove password logic would go here
+        pass
 
 if __name__ == '__main__':
     DataPlotterApp().run()
